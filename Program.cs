@@ -79,7 +79,7 @@ namespace SolitaireConsole {
 	// Klasa reprezentująca talię kart
 	public class Deck {
 		private List<Card> cards; // Lista kart w talii
-		private static Random rng = new Random(); // Generator liczb losowych do tasowania
+		private static readonly Random rng = new Random(); // Generator liczb losowych do tasowania
 
 		// Konstruktor tworzący pełną, potasowaną talię 52 kart
 		public Deck() {
@@ -564,8 +564,13 @@ namespace SolitaireConsole {
 			}
 
 			// Rysuj wiersz po wierszu
-			for (int row = 0; row < maxRows; row++) {
+			for (int row = -1; row < maxRows; row++) {
 				for (int col = 0; col < 7; col++) {
+					if (row == -1) { // Nagłówek kolumny
+						Console.Write($" T{col + 1}  ");
+						continue;
+					}
+
 					var currentTableau = Tableaux[col];
 					if (row < currentTableau.Count) {
 						// Jeśli karta istnieje w tym wierszu i kolumnie
