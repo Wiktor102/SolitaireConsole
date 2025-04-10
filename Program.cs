@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text; // Potrzebne dla StringBuilder
-using System.IO; // Potrzebne do zapisu/odczytu rankingu
+﻿using System.Text; // Potrzebne dla StringBuilder
 
 namespace SolitaireConsole {
 	// Enum reprezentujący kolory kart (Czerwony/Czarny)
@@ -131,310 +127,141 @@ namespace SolitaireConsole {
 
 	// Klasa bazowa dla różnych stosów kart (abstrakcyjna)
 	public abstract class CardPile {
-		protected List<Card> cards; // Lista kart na stosie
+		protected List<Card> cards;
+		public abstract PileType PileType { get; } // Dodana właściwość abstrakcyjna
 
-		// Konstruktor inicjalizujący pusty stos
-		protected CardPile() {
-			cards = new List<Card>();
-		}
-
-		// Zwraca liczbę kart na stosie
+		protected CardPile() { cards = new List<Card>(); }
 		public int Count => cards.Count;
-
-		// Sprawdza, czy stos jest pusty
 		public bool IsEmpty => cards.Count == 0;
-
-		// Dodaje kartę na wierzch stosu
-		public virtual void AddCard(Card card) {
-			cards.Add(card);
-		}
-
-		// Dodaje listę kart na wierzch stosu
-		public virtual void AddCards(IEnumerable<Card> cardsToAdd) {
-			cards.AddRange(cardsToAdd);
-		}
-
-		// Pobiera kartę z wierzchu stosu (bez usuwania)
-		// Zwraca null, jeśli stos jest pusty
-		public Card? PeekTopCard() {
-			return cards.LastOrDefault();
-		}
-
-		// Usuwa i zwraca kartę z wierzchu stosu
-		// Zwraca null, jeśli stos jest pusty
+		public virtual void AddCard(Card card) { cards.Add(card); }
+		public virtual void AddCards(IEnumerable<Card> cardsToAdd) { cards.AddRange(cardsToAdd); }
+		public Card? PeekTopCard() { return cards.LastOrDefault(); }
 		public virtual Card? RemoveTopCard() {
 			if (IsEmpty) return null;
 			Card card = cards[cards.Count - 1];
 			cards.RemoveAt(cards.Count - 1);
 			return card;
 		}
-
-		// Usuwa i zwraca określoną liczbę kart z wierzchu stosu
 		public virtual List<Card> RemoveTopCards(int count) {
-			if (count <= 0 || count > cards.Count) {
-				// Zwraca pustą listę, jeśli żądanie jest nieprawidłowe
-				return new List<Card>();
-			}
-			// Pobiera 'count' ostatnich kart
+			if (count <= 0 || count > cards.Count) return new List<Card>();
 			List<Card> removed = cards.GetRange(cards.Count - count, count);
-			// Usuwa te karty z oryginalnego stosu
 			cards.RemoveRange(cards.Count - count, count);
 			return removed;
 		}
-
-		// Zwraca wszystkie karty ze stosu (bez usuwania)
-		public List<Card> GetAllCards() {
-			return new List<Card>(cards); // Zwraca kopię listy
+		public List<Card> GetAllCards() { return new List<Card>(cards); }
+		public void Clear() { cards.Clear(); }
+		public abstract bool CanAddCard(Card card); // Pozostaje abstrakcyjna
+		public Card? GetCardAt(int index) // Pomocnicza metoda do pobrania karty na danej pozycji
+		{
+			if (index >= 0 && index < cards.Count) return cards[index];
+			return null;
 		}
-
-		// Czyści stos (usuwa wszystkie karty)
-		public void Clear() {
-			cards.Clear();
-		}
-
-		// Abstrakcyjna metoda sprawdzająca, czy można dodać kartę na ten stos
-		// Musi być zaimplementowana przez klasy dziedziczące
-		public abstract bool CanAddCard(Card card);
 	}
-
 	// Stos rezerwowy (Stock) - skąd dobieramy karty
 	public class StockPile : CardPile {
-		private Deck deck; // Talia używana do gry
-
-		// Konstruktor inicjalizujący stos rezerwowy z nowej talii
+		private Deck deck;
+		public override PileType PileType => PileType.Stock; // Implementacja właściwości
 		public StockPile() {
-			deck = new Deck(); // Tworzy nową, potasowaną talię
-							   // Przenosi wszystkie karty z talii do stosu rezerwowego
-			while (deck.Count > 0) {
-				Card? card = deck.Deal();
-				if (card != null) {
-					card.IsFaceUp = false; // Karty w stosie rezerwowym są zakryte
-					AddCard(card);
-				}
-			}
+			deck = new Deck();
+			while (deck.Count > 0) { Card? card = deck.Deal(); if (card != null) { card.IsFaceUp = false; AddCard(card); } }
 		}
-
-		// Metoda do rozdania kart na początku gry do kolumn Tableau
-		public List<Card> DealInitialTableauCards(int count) {
-			return RemoveTopCards(count);
-		}
-
-		// Metoda do dobrania kart ze stosu rezerwowego
-		// Zwraca listę dobranych kart (1 lub 3 w zależności od trudności)
+		public List<Card> DealInitialTableauCards(int count) { return RemoveTopCards(count); }
 		public List<Card> Draw(int drawCount) {
-			int actualDrawCount = Math.Min(drawCount, cards.Count); // Nie można dobrać więcej niż jest
+			int actualDrawCount = Math.Min(drawCount, cards.Count);
 			List<Card> drawnCards = RemoveTopCards(actualDrawCount);
-			// Odkrywamy dobrane karty
-			foreach (var card in drawnCards) {
-				card.IsFaceUp = true;
-			}
+			foreach (var card in drawnCards) card.IsFaceUp = true;
 			return drawnCards;
 		}
-
-		// Metoda do resetowania stosu rezerwowego (przeniesienie kart z Waste z powrotem)
 		public void Reset(IEnumerable<Card> wasteCards) {
-			// Dodajemy karty z Waste z powrotem do Stock
-			AddCards(wasteCards.Reverse()); // Odwracamy kolejność, aby zachować porządek dobierania
-											// Tasujemy ponownie (zgodnie ze specyfikacją)
+			AddCards(wasteCards.Reverse());
 			ShuffleStock();
 		}
-
-		// Prywatna metoda do tasowania kart w stosie rezerwowym
 		private void ShuffleStock() {
-			int n = cards.Count;
-			var rng = new Random();
-			while (n > 1) {
-				n--;
-				int k = rng.Next(n + 1);
-				Card value = cards[k];
-				cards[k] = cards[n];
-				cards[n] = value;
-			}
-			// Upewniamy się, że wszystkie karty są zakryte po przetasowaniu
-			foreach (var card in cards) {
-				card.IsFaceUp = false;
-			}
+			int n = cards.Count; var rng = new Random();
+			while (n > 1) { n--; int k = rng.Next(n + 1); Card value = cards[k]; cards[k] = cards[n]; cards[n] = value; }
+			foreach (var card in cards) card.IsFaceUp = false;
 		}
-
-
-		// Stos rezerwowy nie przyjmuje kart bezpośrednio (tylko przez Reset)
-		public override bool CanAddCard(Card card) {
-			return false;
-		}
+		public override bool CanAddCard(Card card) => false;
 	}
-
 	// Stos kart odrzuconych (Waste) - gdzie trafiają karty ze Stock
 	public class WastePile : CardPile {
-		// Konstruktor
+		public override PileType PileType => PileType.Waste; // Implementacja właściwości
 		public WastePile() : base() { }
-
-		// Metoda do dodawania kart dobranych ze Stock
 		public override void AddCards(IEnumerable<Card> cardsToAdd) {
-			foreach (var card in cardsToAdd) {
-				card.IsFaceUp = true; // Karty w Waste są zawsze odkryte
-			}
-			base.AddCards(cardsToAdd); // Dodaje karty na wierzch
+			foreach (var card in cardsToAdd) card.IsFaceUp = true;
+			base.AddCards(cardsToAdd);
 		}
-
-		// Zwraca kartę, którą można zagrać (zawsze wierzchnia)
-		public Card? GetPlayableCard() {
-			return PeekTopCard();
-		}
-
-		// Usuwa wierzchnią kartę (po zagraniu jej)
-		public override Card? RemoveTopCard() {
-			return base.RemoveTopCard();
-		}
-
-		// Waste Pile nie przyjmuje kart w standardowy sposób (tylko ze Stock)
-		public override bool CanAddCard(Card card) {
-			return false;
+		public Card? GetPlayableCard() => PeekTopCard();
+		public override Card? RemoveTopCard() => base.RemoveTopCard();
+		public override bool CanAddCard(Card card) => false;
+		// Zwraca karty widoczne na stosie Waste (1 lub 3)
+		public List<Card> GetVisibleCards(bool isHardMode) {
+			if (IsEmpty) return new List<Card>();
+			int count = isHardMode ? 3 : 1;
+			int startIndex = Math.Max(0, cards.Count - count);
+			return cards.GetRange(startIndex, cards.Count - startIndex);
 		}
 	}
 
 	// Stos końcowy (Foundation) - gdzie układamy karty od Asa do Króla
 	public class FoundationPile : CardPile {
-		public Suit PileSuit { get; private set; } // Kolor (Suit) tego stosu
-		private bool suitSet = false; // Czy kolor stosu został już ustalony?
-
-		// Konstruktor
+		public Suit PileSuit { get; private set; }
+		private bool suitSet = false;
+		public override PileType PileType => PileType.Foundation; // Implementacja właściwości
 		public FoundationPile() : base() { }
-
-		// Sprawdza, czy można dodać kartę na ten stos
 		public override bool CanAddCard(Card card) {
-			// Jeśli stos jest pusty, można dodać tylko Asa
-			if (IsEmpty) {
-				return card.Rank == Rank.Ace;
-			} else {
-				// Jeśli stos nie jest pusty, sprawdzamy wierzchnią kartę
-				Card? topCard = PeekTopCard();
-				if (topCard != null) {
-					// Karta musi być tego samego koloru (Suit)
-					// i o jeden stopień wyższa (Rank) niż wierzchnia karta
-					return card.Suit == topCard.Suit && card.Rank == topCard.Rank + 1;
-				}
-				return false; // Nie powinno się zdarzyć, ale dla bezpieczeństwa
-			}
+			if (IsEmpty) return card.Rank == Rank.Ace;
+			else { Card? topCard = PeekTopCard(); return topCard != null && card.Suit == topCard.Suit && card.Rank == topCard.Rank + 1; }
 		}
-
-		// Dodaje kartę na stos (nadpisuje bazową metodę)
 		public override void AddCard(Card card) {
 			if (CanAddCard(card)) {
-				// Jeśli to pierwsza karta (As), ustawiamy kolor (Suit) stosu
-				if (IsEmpty) {
-					PileSuit = card.Suit;
-					suitSet = true;
-				}
-				card.IsFaceUp = true; // Karty na Foundation są zawsze odkryte
+				if (IsEmpty) { PileSuit = card.Suit; suitSet = true; }
+				card.IsFaceUp = true;
 				base.AddCard(card);
-			} else {
-				// Rzucenie wyjątku lub obsługa błędu, jeśli próba dodania nieprawidłowej karty
-				// Console.WriteLine("Błąd: Nie można dodać tej karty na stos końcowy.");
 			}
 		}
-
-		// Metoda do resetowania koloru stosu (np. przy cofaniu ruchu Asa)
-		public void ResetSuitIfEmpty() {
-			if (IsEmpty) {
-				suitSet = false;
-				// PileSuit technicznie pozostaje, ale suitSet decyduje
-			}
-		}
-
-		// Zwraca kolor (Suit) przypisany do tego stosu, jeśli został ustawiony
-		public Suit? GetPileSuit() {
-			return suitSet ? PileSuit : (Suit?)null;
-		}
+		public void ResetSuitIfEmpty() { if (IsEmpty) suitSet = false; }
+		public Suit? GetPileSuit() => suitSet ? PileSuit : (Suit?)null;
 	}
 
 	// Kolumna gry (Tableau) - 7 kolumn na planszy
 	public class TableauPile : CardPile {
-		// Konstruktor
+		public override PileType PileType => PileType.Tableau; // Implementacja właściwości
 		public TableauPile() : base() { }
-
-		// Metoda do inicjalnego rozdania kart do kolumny
 		public void DealInitialCards(List<Card> initialCards) {
 			cards.AddRange(initialCards);
-			// Odkrywamy tylko ostatnią kartę
-			if (cards.Count > 0) {
-				cards.Last().IsFaceUp = true;
-			}
+			if (cards.Count > 0) cards.Last().IsFaceUp = true;
 		}
-
-		// Sprawdza, czy można dodać pojedynczą kartę na wierzch tej kolumny
 		public override bool CanAddCard(Card card) {
-			// Jeśli kolumna jest pusta, można dodać tylko Króla (K)
-			if (IsEmpty) {
-				return card.Rank == Rank.King;
-			} else {
-				// Jeśli kolumna nie jest pusta, sprawdzamy wierzchnią kartę
-				Card? topCard = PeekTopCard();
-				if (topCard != null && topCard.IsFaceUp) // Musi być odkryta
-				{
-					// Karta musi być przeciwnego koloru (Red/Black)
-					// i o jeden stopień niższa (Rank) niż wierzchnia karta
-					return card.Color != topCard.Color && card.Rank == topCard.Rank - 1;
-				}
-				return false; // Nie można dodać na zakrytą kartę
-			}
+			if (IsEmpty) return card.Rank == Rank.King;
+			else { Card? topCard = PeekTopCard(); return topCard != null && topCard.IsFaceUp && card.Color != topCard.Color && card.Rank == topCard.Rank - 1; }
 		}
-
-		// Sprawdza, czy można dodać sekwencję kart na wierzch tej kolumny
-		// (Pierwsza karta sekwencji musi pasować do wierzchniej karty kolumny)
 		public bool CanAddSequence(List<Card> sequence) {
-			if (sequence == null || sequence.Count == 0 || !sequence.First().IsFaceUp) {
-				return false; // Sekwencja musi istnieć i pierwsza karta musi być odkryta
-			}
-			// Sprawdza, czy pierwsza karta sekwencji pasuje do wierzchu kolumny
+			if (sequence == null || sequence.Count == 0 || !sequence.First().IsFaceUp) return false;
 			return CanAddCard(sequence.First());
 		}
-
-		// Odkrywa wierzchnią kartę, jeśli jest zakryta
 		public bool FlipTopCardIfNecessary() {
-			if (!IsEmpty && !cards.Last().IsFaceUp) {
-				cards.Last().IsFaceUp = true;
-				return true; // Karta została odkryta
-			}
-			return false; // Karta już była odkryta lub stos jest pusty
+			if (!IsEmpty && !cards.Last().IsFaceUp) { cards.Last().IsFaceUp = true; return true; }
+			return false;
 		}
-
-		// Znajduje indeks pierwszej odkrytej karty od góry
-		// Zwraca -1, jeśli nie ma odkrytych kart
 		public int FindFirstFaceUpCardIndex() {
-			for (int i = 0; i < cards.Count; i++) {
-				if (cards[i].IsFaceUp) {
-					return i;
-				}
-			}
+			for (int i = 0; i < cards.Count; i++) if (cards[i].IsFaceUp) return i;
 			return -1;
 		}
-
-		// Pobiera sekwencję odkrytych kart, zaczynając od podanego indeksu
-		public List<Card> GetFaceUpSequence(int startIndex) {
-			if (startIndex < 0 || startIndex >= cards.Count || !cards[startIndex].IsFaceUp) {
-				return new List<Card>(); // Zwraca pustą listę, jeśli indeks jest nieprawidłowy lub karta jest zakryta
-			}
-			// Zwraca wszystkie karty od startIndex do końca
+		// Zwraca sekwencję kart od podanego indeksu (jeśli są odkryte)
+		public List<Card> GetSequenceFromIndex(int startIndex) {
+			if (startIndex < 0 || startIndex >= cards.Count || !cards[startIndex].IsFaceUp) return new List<Card>();
 			return cards.GetRange(startIndex, cards.Count - startIndex);
 		}
-
-		// Usuwa sekwencję kart zaczynającą się od podanego indeksu
 		public List<Card> RemoveSequence(int startIndex) {
-			if (startIndex < 0 || startIndex >= cards.Count) {
-				return new List<Card>();
-			}
+			if (startIndex < 0 || startIndex >= cards.Count) return new List<Card>();
 			int count = cards.Count - startIndex;
 			List<Card> removed = cards.GetRange(startIndex, count);
 			cards.RemoveRange(startIndex, count);
 			return removed;
 		}
-
-		// Zwraca listę kart w kolumnie (do wyświetlania)
-		public List<Card> GetCardsForDisplay() {
-			return cards;
-		}
+		public List<Card> GetCardsForDisplay() => cards;
 	}
-
 	// Enum określający typ stosu (do identyfikacji w ruchach)
 	public enum PileType { Stock, Waste, Foundation, Tableau }
 
@@ -466,15 +293,12 @@ namespace SolitaireConsole {
 		public WastePile Waste { get; private set; }
 		public List<FoundationPile> Foundations { get; private set; }
 		public List<TableauPile> Tableaux { get; private set; }
-		public bool IsHardMode { get; private set; } // Poziom trudności
-		public int MovesCount { get; private set; } // Licznik ruchów
+		public bool IsHardMode { get; private set; }
+		public int MovesCount { get; private set; }
+		private const int MaxUndoSteps = 3;
+		private Stack<MoveRecord> moveHistory;
+		private HighScoreManager highScoreManager;
 
-		private const int MaxUndoSteps = 3; // Maksymalna liczba cofnięć
-		private Stack<MoveRecord> moveHistory; // Stos do przechowywania historii ruchów
-
-		private HighScoreManager highScoreManager; // Zarządzanie najlepszymi wynikami
-
-		// Konstruktor inicjalizujący nową grę
 		public Game(bool hardMode) {
 			IsHardMode = hardMode;
 			Stock = new StockPile();
@@ -483,445 +307,204 @@ namespace SolitaireConsole {
 			Tableaux = new List<TableauPile>(7);
 			moveHistory = new Stack<MoveRecord>();
 			MovesCount = 0;
-			highScoreManager = new HighScoreManager("highscores.txt"); // Plik do zapisu wyników
-
-			// Inicjalizacja pustych stosów końcowych i kolumn gry
+			highScoreManager = new HighScoreManager("highscores.txt");
 			for (int i = 0; i < 4; i++) Foundations.Add(new FoundationPile());
 			for (int i = 0; i < 7; i++) Tableaux.Add(new TableauPile());
-
-			// Rozdanie kart do kolumn Tableau
 			for (int i = 0; i < 7; i++) {
-				// Kolumna 'i' otrzymuje 'i+1' kart
 				List<Card> cardsToDeal = Stock.DealInitialTableauCards(i + 1);
 				Tableaux[i].DealInitialCards(cardsToDeal);
 			}
 		}
 
-		// Metoda rysująca aktualny stan gry w konsoli
-		public void DisplayGame() {
-			Console.Clear(); // Czyści konsolę przed rysowaniem
-			Console.OutputEncoding = Encoding.UTF8; // Ustawienie kodowania dla symboli kart
+		// Metoda DisplayGame została przeniesiona i zmodyfikowana w klasie Program
+		// (bo teraz zawiera logikę kursora)
 
-			// --- Rysowanie górnej części: Stock, Waste, Foundations ---
-			Console.WriteLine("--- Pasjans ---");
-			Console.Write($"Stos [S]: {(Stock.IsEmpty ? "[   ]" : "[ * ]")} ({Stock.Count})   "); // Wyświetla [ * ] jeśli są karty, [   ] jeśli pusty
-			Console.Write("Odrzucone [W]: ");
-			// Wyświetla 1 lub 3 karty z Waste w zależności od trybu
-			if (Waste.IsEmpty) {
-				Console.Write("[   ]");
-			} else {
-				var wasteCards = Waste.GetAllCards();
-				int startIndex = IsHardMode ? Math.Max(0, wasteCards.Count - 3) : Math.Max(0, wasteCards.Count - 1);
-				// W trybie trudnym pokazujemy do 3 kart, w łatwym 1
-				// Ale tylko wierzchnia jest grywalna
-				for (int i = startIndex; i < wasteCards.Count; i++) {
-					DisplayCard(wasteCards[i]);
-					Console.Write(" ");
-				}
-				// Jeśli w trybie trudnym jest mniej niż 3, dopełnij spacjami
-				if (IsHardMode && wasteCards.Count < 3) {
-					for (int i = 0; i < 3 - wasteCards.Count; ++i) Console.Write("    ");
-				}
-
-			}
-
-			Console.Write("    Stosy Końcowe [F1-F4]: ");
-			for (int i = 0; i < 4; i++) {
-				Card? topCard = Foundations[i].PeekTopCard();
-				if (topCard != null) {
-					DisplayCard(topCard);
-				} else {
-					// Wyświetl symbol koloru, jeśli jest ustawiony, inaczej puste miejsce
-					Suit? pileSuit = Foundations[i].GetPileSuit();
-					if (pileSuit.HasValue) {
-						char suitChar = '?';
-						ConsoleColor color = ConsoleColor.White;
-						switch (pileSuit.Value) {
-							case Suit.Hearts: suitChar = '♥'; color = ConsoleColor.Red; break;
-							case Suit.Diamonds: suitChar = '♦'; color = ConsoleColor.Red; break;
-							case Suit.Clubs: suitChar = '♣'; color = ConsoleColor.DarkGray; break; // Użyj DarkGray dla czarnych
-							case Suit.Spades: suitChar = '♠'; color = ConsoleColor.DarkGray; break;
-						}
-						Console.ForegroundColor = color;
-						Console.Write($"[ {suitChar} ]");
-						Console.ResetColor();
-					} else {
-						Console.Write("[   ]"); // Pusty stos
-					}
-				}
-				Console.Write(" ");
-			}
-			Console.WriteLine($"\nLiczba ruchów: {MovesCount}");
-			Console.WriteLine(new string('-', Console.WindowWidth > 0 ? Console.WindowWidth - 1 : 80)); // Linia oddzielająca
-
-			// --- Rysowanie kolumn Tableau [T1-T7] ---
-			Console.WriteLine("Kolumny Gry [T1-T7]:");
-
-			// Znajdź maksymalną wysokość kolumny Tableau
-			int maxRows = 0;
-			foreach (var tableau in Tableaux) {
-				maxRows = Math.Max(maxRows, tableau.Count);
-			}
-
-			// Rysuj wiersz po wierszu
-			for (int row = -1; row < maxRows; row++) {
-				for (int col = 0; col < 7; col++) {
-					if (row == -1) { // Nagłówek kolumny
-						Console.Write($" T{col + 1}  ");
-						continue;
-					}
-
-					var currentTableau = Tableaux[col];
-					if (row < currentTableau.Count) {
-						// Jeśli karta istnieje w tym wierszu i kolumnie
-						DisplayCard(currentTableau.GetCardsForDisplay()[row]);
-						Console.Write(" "); // Odstęp między kartami w kolumnie
-					} else {
-						// Puste miejsce, jeśli kolumna jest krótsza
-						Console.Write("    "); // 4 spacje dla wyrównania
-					}
-					Console.Write(" "); // Odstęp między kolumnami
-				}
-				Console.WriteLine(); // Nowa linia dla następnego wiersza kart
-			}
-			Console.WriteLine(new string('-', Console.WindowWidth > 0 ? Console.WindowWidth - 1 : 80)); // Linia oddzielająca
-		}
-
-		// Pomocnicza metoda do wyświetlania pojedynczej karty z odpowiednim kolorem
-		private void DisplayCard(Card card) {
-			if (card.IsFaceUp) {
-				Console.ForegroundColor = (card.Color == CardColor.Red) ? ConsoleColor.Red : ConsoleColor.DarkGray; // Ciemnoszary dla czarnych dla lepszej widoczności na niektórych tłach
-			} else {
-				Console.ForegroundColor = ConsoleColor.White; // Kolor dla zakrytych kart
-			}
-			Console.Write(card.GetDisplay());
-			Console.ResetColor(); // Resetuj kolor po wyświetleniu karty
-		}
-
-		// Metoda do obsługi dobierania kart ze stosu rezerwowego (Stock)
 		public bool DrawFromStock() {
-			// Sprawdź, czy można cofnąć ten ruch (jeśli historia jest pełna)
 			bool canUndo = moveHistory.Count < MaxUndoSteps;
-
-			// Jeśli Stock jest pusty, przenieś karty z Waste z powrotem do Stock
 			if (Stock.IsEmpty) {
-				if (Waste.IsEmpty) {
-					Console.WriteLine("Brak kart do dobrania i stos odrzuconych jest pusty.");
-					return false; // Nic się nie dzieje
-				}
-
-				// Zapisz stan PRZED resetem (jako specjalny ruch "reset")
-				// Tworzymy "pseudo" ruch resetu, aby móc go cofnąć
-				// Przechowujemy karty z Waste, które zostaną przeniesione
+				if (Waste.IsEmpty) return false;
 				var wasteCardsBeforeReset = Waste.GetAllCards();
-				// Używamy specjalnych indeksów/typów, aby zidentyfikować reset
 				var resetRecord = new MoveRecord(PileType.Waste, -1, PileType.Stock, -1, wasteCardsBeforeReset, false, false);
-				if (moveHistory.Count >= MaxUndoSteps) moveHistory.Pop(); // Usuń najstarszy ruch, jeśli stos jest pełny
+				if (moveHistory.Count >= MaxUndoSteps) moveHistory.TryPop(out _); // Użyj TryPop
 				moveHistory.Push(resetRecord);
-
-
-				Stock.Reset(Waste.GetAllCards()); // Przenieś karty z Waste
-				Waste.Clear(); // Wyczyść Waste
-				MovesCount++; // Reset liczy się jako ruch
-				return true; // Pomyślnie zresetowano stos
+				Stock.Reset(Waste.GetAllCards());
+				Waste.Clear();
+				MovesCount++;
+				return true;
 			}
-
-			// Dobierz karty ze Stock do Waste
 			int cardsToDraw = IsHardMode ? 3 : 1;
 			List<Card> drawnCards = Stock.Draw(cardsToDraw);
-
 			if (drawnCards.Count > 0) {
-				// Zapisz ruch dobrania kart
-				// Traktujemy to jako ruch ze Stock do Waste
-				// Przechowujemy dobrane karty
 				var drawRecord = new MoveRecord(PileType.Stock, 0, PileType.Waste, 0, drawnCards, false, false);
-				if (moveHistory.Count >= MaxUndoSteps) moveHistory.Pop(); // Usuń najstarszy ruch
+				if (moveHistory.Count >= MaxUndoSteps) moveHistory.TryPop(out _);
 				moveHistory.Push(drawRecord);
-
-				Waste.AddCards(drawnCards); // Dodaj dobrane karty do Waste
-				MovesCount++; // Dobranie liczy się jako ruch
-				return true; // Pomyślnie dobrano karty
+				Waste.AddCards(drawnCards);
+				MovesCount++;
+				return true;
 			}
-			return false; // Nie udało się dobrać (choć to nie powinno się zdarzyć po sprawdzeniu IsEmpty)
+			return false;
 		}
 
-		// Metoda do próby przeniesienia karty lub sekwencji kart
+		// TryMove pozostaje bardzo podobne, ale zwraca bool zamiast pisać do konsoli
 		public bool TryMove(PileType sourceType, int sourceIndex, PileType destType, int destIndex, int cardCount = 1) {
 			CardPile? sourcePile = GetPile(sourceType, sourceIndex);
 			CardPile? destPile = GetPile(destType, destIndex);
 
-			if (sourcePile == null || destPile == null || sourcePile == destPile) {
-				Console.WriteLine("Błąd: Nieprawidłowe stosy źródłowe lub docelowe.");
-				return false;
-			}
+			if (sourcePile == null || destPile == null || sourcePile == destPile) return false;
+
 
 			List<Card> cardsToMove = new List<Card>();
 			bool wasSourceTopFlipped = false;
 			bool wasDestFoundationSuitSet = false;
 
-			// --- Logika przenoszenia ---
+			// --- Logika przenoszenia (uproszczona - bez Console.WriteLine) ---
 
-			// 1. Z Waste do Foundation lub Tableau
+			// 1. Z Waste
 			if (sourceType == PileType.Waste) {
-				if (cardCount != 1) { Console.WriteLine("Błąd: Można przenieść tylko jedną kartę ze stosu odrzuconych."); return false; }
-				Card? card = Waste.GetPlayableCard(); // Zawsze wierzchnia
-				if (card == null) { Console.WriteLine("Błąd: Stos odrzuconych jest pusty."); return false; }
-
+				if (cardCount != 1) return false;
+				Card? card = Waste.GetPlayableCard();
+				if (card == null) return false;
 				if (destPile.CanAddCard(card)) {
-					cardsToMove.Add(card); // Dodajemy kartę do listy przenoszonych
-					Waste.RemoveTopCard(); // Usuwamy ją z Waste
-				} else {
-					Console.WriteLine("Błąd: Nie można przenieść tej karty na wybrany stos docelowy.");
-					return false;
-				}
+					cardsToMove.Add(card);
+					Waste.RemoveTopCard();
+				} else return false;
 			}
-			// 2. Z Tableau do Foundation lub innego Tableau
+			// 2. Z Tableau
 			else if (sourceType == PileType.Tableau) {
 				TableauPile sourceTableau = (TableauPile)sourcePile;
-				if (sourceTableau.IsEmpty) { Console.WriteLine("Błąd: Kolumna źródłowa jest pusta."); return false; }
-
-				// Sprawdź, czy żądana liczba kart jest poprawna i czy są odkryte
-				if (cardCount <= 0 || cardCount > sourceTableau.Count) { Console.WriteLine("Błąd: Nieprawidłowa liczba kart do przeniesienia."); return false; }
+				if (sourceTableau.IsEmpty || cardCount <= 0 || cardCount > sourceTableau.Count) return false;
 
 				int firstCardIndex = sourceTableau.Count - cardCount;
-				if (firstCardIndex < 0) { Console.WriteLine("Błąd: Nie można przenieść tylu kart."); return false; } // Dodatkowe zabezpieczenie
+				if (firstCardIndex < 0) return false;
 
-				Card firstCardToMove = sourceTableau.GetCardsForDisplay()[firstCardIndex];
-				if (!firstCardToMove.IsFaceUp) { Console.WriteLine("Błąd: Nie można przenieść zakrytej karty lub sekwencji zaczynającej się od zakrytej karty."); return false; }
+				Card? firstCardToMove = sourceTableau.GetCardAt(firstCardIndex);
+				if (firstCardToMove == null || !firstCardToMove.IsFaceUp) return false;
 
-				// Pobierz sekwencję do przeniesienia
-				List<Card> sequence = sourceTableau.GetFaceUpSequence(firstCardIndex);
-				if (sequence.Count != cardCount) { Console.WriteLine("Błąd wewnętrzny: Niezgodność liczby kart w sekwencji."); return false; } // Sanity check
+				List<Card> sequence = sourceTableau.GetSequenceFromIndex(firstCardIndex);
+				if (sequence.Count != cardCount) return false; // Sanity check
 
-
-				// 2a. Przenoszenie do Foundation (tylko pojedyncza karta)
+				// 2a. Do Foundation
 				if (destType == PileType.Foundation) {
-					if (cardCount != 1) { Console.WriteLine("Błąd: Można przenieść tylko jedną kartę na stos końcowy."); return false; }
+					if (cardCount != 1) return false;
 					if (destPile.CanAddCard(firstCardToMove)) {
-						cardsToMove = sourceTableau.RemoveSequence(firstCardIndex); // Usuń kartę z Tableau
-																					// Sprawdź, czy trzeba odkryć kartę pod spodem
+						cardsToMove = sourceTableau.RemoveSequence(firstCardIndex);
 						wasSourceTopFlipped = sourceTableau.FlipTopCardIfNecessary();
-						// Sprawdź, czy ustawiono kolor stosu Foundation
-						if (destPile.IsEmpty && firstCardToMove.Rank == Rank.Ace) {
-							wasDestFoundationSuitSet = true;
-						}
-					} else { Console.WriteLine("Błąd: Nie można przenieść tej karty na wybrany stos końcowy."); return false; }
+						if (destPile.IsEmpty && firstCardToMove.Rank == Rank.Ace) wasDestFoundationSuitSet = true;
+					} else return false;
 				}
-				// 2b. Przenoszenie do innego Tableau
+				// 2b. Do innego Tableau
 				else if (destType == PileType.Tableau) {
 					TableauPile destTableau = (TableauPile)destPile;
-					if (destTableau.CanAddSequence(sequence)) // Używamy CanAddSequence
-					{
-						cardsToMove = sourceTableau.RemoveSequence(firstCardIndex); // Usuń sekwencję z Tableau
-																					// Sprawdź, czy trzeba odkryć kartę pod spodem w źródłowym Tableau
+					if (destTableau.CanAddSequence(sequence)) {
+						cardsToMove = sourceTableau.RemoveSequence(firstCardIndex);
 						wasSourceTopFlipped = sourceTableau.FlipTopCardIfNecessary();
-					} else { Console.WriteLine("Błąd: Nie można przenieść tej sekwencji na wybraną kolumnę."); return false; }
-				} else {
-					Console.WriteLine("Błąd: Nieprawidłowy cel dla ruchu z kolumny Tableau."); return false;
-				}
+					} else return false;
+				} else return false; // Nieprawidłowy cel
 			}
-			// 3. Z Foundation do Tableau (rzadko używane, ale czasem potrzebne)
+			// 3. Z Foundation
 			else if (sourceType == PileType.Foundation) {
-				if (destType != PileType.Tableau) { Console.WriteLine("Błąd: Kartę ze stosu końcowego można przenieść tylko do kolumny gry."); return false; }
-				if (cardCount != 1) { Console.WriteLine("Błąd: Można przenieść tylko jedną kartę ze stosu końcowego."); return false; }
-
+				if (destType != PileType.Tableau || cardCount != 1) return false;
 				FoundationPile sourceFoundation = (FoundationPile)sourcePile;
 				Card? card = sourceFoundation.PeekTopCard();
-				if (card == null) { Console.WriteLine("Błąd: Stos końcowy źródłowy jest pusty."); return false; }
-
+				if (card == null) return false;
 				TableauPile destTableau = (TableauPile)destPile;
 				if (destTableau.CanAddCard(card)) {
-					cardsToMove.Add(sourceFoundation.RemoveTopCard()!); // Usuwamy kartę z Foundation
-																		// Sprawdź, czy stos Foundation stał się pusty i trzeba zresetować jego Suit
-					if (sourceFoundation.IsEmpty) {
-						sourceFoundation.ResetSuitIfEmpty();
-						// Uwaga: Cofnięcie tego ruchu musi przywrócić Suit!
-						// Potrzebujemy informacji w MoveRecord, że Suit został zresetowany.
-						// Można by dodać pole `WasSourceFoundationSuitReset` do MoveRecord.
-						// Na razie uproszczenie: cofnięcie ruchu przywróci kartę i Suit się ustawi.
-					}
-				} else {
-					Console.WriteLine("Błąd: Nie można przenieść tej karty na wybraną kolumnę.");
-					return false;
-				}
-			} else {
-				Console.WriteLine("Błąd: Nieprawidłowy stos źródłowy.");
-				return false;
-			}
+					cardsToMove.Add(sourceFoundation.RemoveTopCard()!);
+					if (sourceFoundation.IsEmpty) sourceFoundation.ResetSuitIfEmpty();
+				} else return false;
+			} else return false; // Nieprawidłowe źródło
 
-			// --- Finalizacja ruchu ---
+			// --- Finalizacja ---
 			if (cardsToMove.Count > 0) {
-				// Zapisz ruch do historii PRZED wykonaniem
 				var moveRecord = new MoveRecord(sourceType, sourceIndex, destType, destIndex, new List<Card>(cardsToMove), wasSourceTopFlipped, wasDestFoundationSuitSet);
-				if (moveHistory.Count >= MaxUndoSteps) moveHistory.Pop(); // Usuń najstarszy ruch
+				if (moveHistory.Count >= MaxUndoSteps) moveHistory.TryPop(out _);
 				moveHistory.Push(moveRecord);
-
-				// Dodaj przeniesione karty do stosu docelowego
 				destPile.AddCards(cardsToMove);
-				MovesCount++; // Zwiększ licznik ruchów
-				return true; // Ruch wykonany pomyślnie
-			} else {
-				// To nie powinno się zdarzyć, jeśli logika powyżej jest poprawna
-				Console.WriteLine("Błąd wewnętrzny: Nie znaleziono kart do przeniesienia.");
-				return false;
+				MovesCount++;
+				return true;
 			}
+			return false;
 		}
 
-		// Metoda do cofania ostatniego ruchu
+		// UndoLastMove pozostaje bardzo podobne, ale zwraca bool
 		public bool UndoLastMove() {
-			if (moveHistory.Count == 0) {
-				Console.WriteLine("Brak ruchów do cofnięcia.");
-				return false;
+			if (moveHistory.Count == 0) return false;
+
+			MoveRecord lastMove = moveHistory.Pop();
+
+			// Cofanie resetu Stock/Waste
+			if (lastMove.SourcePileType == PileType.Waste && lastMove.SourcePileIndex == -1 && lastMove.DestPileType == PileType.Stock) {
+				Stock.Clear(); Waste.Clear(); Waste.AddCards(lastMove.MovedCards); MovesCount--; return true;
 			}
-
-			MoveRecord lastMove = moveHistory.Pop(); // Pobierz ostatni ruch ze stosu
-
-			// --- Logika cofania ruchu ---
-
-			// Sprawdź, czy to był ruch resetu Stock/Waste
-			if (lastMove.SourcePileType == PileType.Waste && lastMove.SourcePileIndex == -1 &&
-				lastMove.DestPileType == PileType.Stock && lastMove.DestPileIndex == -1) {
-				// Cofanie resetu: przenieś karty z powrotem z Stock do Waste
-				Stock.Clear(); // Wyczyść Stock
-				Waste.Clear(); // Wyczyść Waste (na wszelki wypadek)
-							   // Dodaj karty z rekordu z powrotem do Waste (w oryginalnej kolejności)
-				Waste.AddCards(lastMove.MovedCards);
-				MovesCount--; // Zmniejsz licznik ruchów
-				Console.WriteLine("Cofnięto reset stosu.");
-				return true;
-			}
-			// Sprawdź, czy to był ruch dobrania kart (Stock -> Waste)
+			// Cofanie dobrania kart (Stock -> Waste)
 			else if (lastMove.SourcePileType == PileType.Stock && lastMove.DestPileType == PileType.Waste) {
-				// Cofanie dobrania: przenieś karty z powrotem z Waste do Stock
 				List<Card> cardsToReturn = new List<Card>();
-				// Usuń odpowiednią liczbę kart z Waste (te, które były w MovedCards)
-				for (int i = 0; i < lastMove.MovedCards.Count; ++i) {
-					Card? card = Waste.RemoveTopCard();
-					if (card != null) cardsToReturn.Add(card);
-				}
-				cardsToReturn.Reverse(); // Muszą wrócić w tej samej kolejności, w jakiej były w Stock
-
-				// Dodaj karty z powrotem do Stock (na wierzch)
-				foreach (var card in cardsToReturn) {
-					card.IsFaceUp = false; // Zakryj karty wracające do Stock
-					Stock.AddCard(card);
-				}
-				MovesCount--; // Zmniejsz licznik ruchów
-				Console.WriteLine("Cofnięto dobranie kart.");
-				return true;
-			} else // Standardowy ruch między stosami
-			  {
+				for (int i = 0; i < lastMove.MovedCards.Count; ++i) { Card? card = Waste.RemoveTopCard(); if (card != null) cardsToReturn.Add(card); }
+				cardsToReturn.Reverse();
+				foreach (var card in cardsToReturn) { card.IsFaceUp = false; Stock.AddCard(card); }
+				MovesCount--; return true;
+			}
+			// Standardowy ruch
+			else {
 				CardPile? sourcePile = GetPile(lastMove.SourcePileType, lastMove.SourcePileIndex);
 				CardPile? destPile = GetPile(lastMove.DestPileType, lastMove.DestPileIndex);
+				if (sourcePile == null || destPile == null) { moveHistory.Push(lastMove); return false; } // Błąd -> przywróć ruch
 
-				if (sourcePile == null || destPile == null) {
-					Console.WriteLine("Błąd wewnętrzny: Nie można znaleźć stosów dla cofnięcia ruchu.");
-					// Potencjalnie przywróć ruch do historii? Na razie zakładamy błąd krytyczny.
-					return false;
-				}
-
-				// 1. Usuń przeniesione karty ze stosu docelowego (Dest)
-				// Musimy usunąć dokładnie te karty, które były przeniesione.
-				// Najprościej jest usunąć 'n' ostatnich kart, gdzie 'n' to liczba przeniesionych kart.
 				List<Card> removedFromDest = destPile.RemoveTopCards(lastMove.MovedCards.Count);
-
-				// Sprawdzenie, czy usunięte karty zgadzają się z zapisanymi (sanity check)
 				if (!AreCardListsEqual(removedFromDest, lastMove.MovedCards)) {
-					Console.WriteLine("Błąd krytyczny: Niezgodność kart podczas cofania ruchu!");
-					// Przywróć stan przed próbą cofnięcia?
-					destPile.AddCards(removedFromDest); // Przywróć usunięte karty
-					moveHistory.Push(lastMove); // Przywróć ruch do historii
-					return false;
+					destPile.AddCards(removedFromDest); moveHistory.Push(lastMove); return false; // Błąd -> przywróć
 				}
 
-				// Jeśli cofamy ruch Asa na pusty Foundation, zresetuj Suit tego Foundation
 				if (lastMove.DestPileType == PileType.Foundation && lastMove.WasDestFoundationSuitSet) {
 					((FoundationPile)destPile).ResetSuitIfEmpty();
 				}
 
-
-				// 2. Jeśli w stosie źródłowym (Source) odkryto kartę po ruchu, zakryj ją z powrotem
-				if (lastMove.WasSourceTopCardFlipped) {
-					// Dotyczy tylko Tableau -> Tableau/Foundation
-					if (lastMove.SourcePileType == PileType.Tableau) {
-						Card? topCard = sourcePile.PeekTopCard();
-						if (topCard != null) {
-							topCard.IsFaceUp = false;
-						} else {
-							// To nie powinno się zdarzyć, jeśli WasSourceTopCardFlipped=true
-							Console.WriteLine("Ostrzeżenie: Próbowano zakryć kartę na pustym stosie źródłowym podczas cofania.");
-						}
-					}
+				if (lastMove.WasSourceTopCardFlipped && lastMove.SourcePileType == PileType.Tableau) {
+					Card? topCard = sourcePile.PeekTopCard();
+					if (topCard != null) topCard.IsFaceUp = false;
 				}
 
-				// 3. Dodaj przeniesione karty z powrotem na stos źródłowy (Source)
-				// Używamy kart z `lastMove.MovedCards`, bo `removedFromDest` mogło zostać zmodyfikowane
 				sourcePile.AddCards(lastMove.MovedCards);
-
-
-				MovesCount--; // Zmniejsz licznik ruchów
-				Console.WriteLine("Cofnięto ostatni ruch.");
+				MovesCount--;
 				return true;
 			}
 		}
 
-		// Pomocnicza metoda do porównywania list kart (proste porównanie referencji lub wartości)
 		private bool AreCardListsEqual(List<Card> list1, List<Card> list2) {
 			if (list1.Count != list2.Count) return false;
-			for (int i = 0; i < list1.Count; i++) {
-				// Porównujemy Suit i Rank, bo to te same obiekty Card
-				if (list1[i].Suit != list2[i].Suit || list1[i].Rank != list2[i].Rank) {
-					return false;
-				}
-			}
+			for (int i = 0; i < list1.Count; i++) if (list1[i].Suit != list2[i].Suit || list1[i].Rank != list2[i].Rank) return false;
 			return true;
 		}
 
-
-		// Metoda pomocnicza do pobierania obiektu stosu na podstawie typu i indeksu
-		private CardPile? GetPile(PileType type, int index) {
+		public CardPile? GetPile(PileType type, int index) {
 			try {
 				switch (type) {
 					case PileType.Stock: return Stock;
 					case PileType.Waste: return Waste;
-					case PileType.Foundation: return Foundations[index]; // index 0-3
-					case PileType.Tableau: return Tableaux[index];     // index 0-6
+					case PileType.Foundation: return Foundations[index];
+					case PileType.Tableau: return Tableaux[index];
 					default: return null;
 				}
-			} catch (ArgumentOutOfRangeException) {
-				// Jeśli indeks jest poza zakresem dla Foundation lub Tableau
-				return null;
-			}
+			} catch { return null; }
 		}
-
-		// Metoda sprawdzająca warunek zwycięstwa
-		public bool CheckWinCondition() {
-			// Wygrana następuje, gdy wszystkie 4 stosy końcowe są pełne (mają 13 kart)
-			return Foundations.All(f => f.Count == 13);
-		}
-
-		// Metoda do obsługi zakończenia gry (wygranej)
+		public bool CheckWinCondition() => Foundations.All(f => f.Count == 13);
 		public void HandleWin() {
-			DisplayGame(); // Pokaż finalny stan planszy
+			// Wyświetlanie musi być teraz zrobione w Program.Main
+			Console.Clear();
 			Console.WriteLine("\n*************************************");
 			Console.WriteLine("* Gratulacje! Wygrałeś w Pasjansa! *");
 			Console.WriteLine($"* Ukończyłeś grę w {MovesCount} ruchach.    *");
 			Console.WriteLine("*************************************\n");
-
-			// Zapisz wynik
 			Console.Write("Podaj swoje inicjały (max 3 znaki): ");
 			string initials = Console.ReadLine()?.Trim().ToUpper() ?? "XYZ";
 			if (initials.Length > 3) initials = initials.Substring(0, 3);
 			if (string.IsNullOrWhiteSpace(initials)) initials = "XYZ";
-
 			highScoreManager.AddScore(initials, MovesCount);
 			Console.WriteLine("\nRanking najlepszych wyników:");
 			highScoreManager.DisplayScores();
 			Console.WriteLine("\nNaciśnij Enter, aby zakończyć...");
 			Console.ReadLine();
 		}
-
-		// Metoda do wyświetlania rankingu
 		public void DisplayHighScores() {
 			Console.WriteLine("\n--- Ranking Najlepszych Wyników ---");
 			highScoreManager.DisplayScores();
@@ -1004,233 +587,463 @@ namespace SolitaireConsole {
 		}
 	}
 
+	public enum ActiveArea { Stock, Waste, Foundation, Tableau }
 
 	// Główna klasa programu
 	class Program {
+		// Stan UI
+		private static ActiveArea currentArea = ActiveArea.Stock; // Aktualnie aktywny obszar
+		private static int currentPileIndex = 0; // Indeks stosu w Foundation (0-3) lub Tableau (0-6)
+		private static int currentCardIndex = 0; // Indeks karty w Tableau (licząc od góry, 0 = najwyższa)
+
+		private static ActiveArea selectedArea = ActiveArea.Stock; // Obszar zaznaczonego źródła
+		private static int selectedPileIndex = -1; // Indeks zaznaczonego stosu źródłowego (-1 = nic nie zaznaczono)
+		private static int selectedCardIndex = -1; // Indeks zaznaczonej karty źródłowej w Tableau (-1 = cały stos/nie dotyczy)
+		private static int selectedCardCount = 0; // Liczba zaznaczonych kart w sekwencji
+
+		private static string message = ""; // Komunikat dla użytkownika
+
 		static void Main(string[] args) {
-			Console.Title = "Pasjans Konsolowy"; // Ustawia tytuł okna konsoli
-			Console.OutputEncoding = Encoding.UTF8; // Ważne dla polskich znaków i symboli kart
+			Console.Title = "Pasjans Konsolowy (Sterowanie Strzałkami)";
+			Console.OutputEncoding = Encoding.UTF8;
+			Console.CursorVisible = false; // Ukryj kursor systemowy
 
 			bool playAgain = true;
 			while (playAgain) {
-				// Wybór poziomu trudności
 				bool? hardMode = ChooseDifficulty();
-				if (!hardMode.HasValue) // Użytkownik wybrał wyjście
-				{
-					playAgain = false;
-					continue;
-				}
+				if (!hardMode.HasValue) { playAgain = false; continue; }
 
-				Game game = new Game(hardMode.Value); // Rozpocznij nową grę
+				Game game = new Game(hardMode.Value);
+				ResetSelection(); // Zresetuj zaznaczenie na start gry
 
 				// Główna pętla gry
 				while (true) {
-					game.DisplayGame(); // Wyświetl stan gry
+					DisplayGame(game); // Wyświetl stan gry z kursorem/zaznaczeniem
 
-					// Sprawdź warunek zwycięstwa
 					if (game.CheckWinCondition()) {
-						game.HandleWin(); // Obsłuż wygraną
+						game.HandleWin(); // Obsłuż wygraną (to czyści konsolę i czeka na Enter)
 						break; // Zakończ pętlę gry
 					}
 
-					// Wyświetl dostępne akcje
-					Console.WriteLine("\nAkcje:");
-					Console.WriteLine(" - draw / d          : Dobierz kartę ze stosu [S]");
-					Console.WriteLine(" - move / m [źr] [cel]: Przenieś kartę/sekwencję (np. m W T2, m T1 F1, m T3 T5 [liczba])");
-					Console.WriteLine(" - undo / u          : Cofnij ostatni ruch (do 3 ruchów)");
-					Console.WriteLine(" - score / h         : Pokaż ranking");
-					Console.WriteLine(" - restart / r       : Rozpocznij nową grę");
-					Console.WriteLine(" - quit / q          : Zakończ grę");
-					Console.Write("Wybierz akcję: ");
+					// Odczytaj klawisz
+					ConsoleKeyInfo keyInfo = Console.ReadKey(true); // true = nie wyświetlaj wciśniętego klawisza
 
-					string? input = Console.ReadLine()?.ToLower().Trim(); // Wczytaj i przetwórz komendę użytkownika
+					message = ""; // Wyczyść komunikat przed obsługą nowego klawisza
 
-					if (string.IsNullOrWhiteSpace(input)) continue; // Ignoruj puste linie
+					// Obsługa klawiszy
+					switch (keyInfo.Key) {
+						// --- Nawigacja ---
+						case ConsoleKey.UpArrow: MoveCursor(game, 0, -1); break;
+						case ConsoleKey.DownArrow: MoveCursor(game, 0, 1); break;
+						case ConsoleKey.LeftArrow: MoveCursor(game, -1, 0); break;
+						case ConsoleKey.RightArrow: MoveCursor(game, 1, 0); break;
 
-					string[] parts = input.Split(' ', StringSplitOptions.RemoveEmptyEntries); // Podziel komendę na części
-					string command = parts[0];
+						// --- Akcje ---
+						case ConsoleKey.Enter:
+						case ConsoleKey.Spacebar:
+							HandleSelectionOrMove(game);
+							break;
+						case ConsoleKey.D: // Dobierz ze Stock
+							if (selectedPileIndex != -1) { message = "Najpierw zakończ lub anuluj zaznaczenie (Esc)."; break; }
+							if (!game.DrawFromStock()) message = "Nie można dobrać karty.";
+							// Po dobraniu, automatycznie ustaw kursor na Waste, jeśli to możliwe
+							if (game.Waste.Count > 0) { currentArea = ActiveArea.Waste; currentPileIndex = 0; currentCardIndex = 0; }
+							break;
+						case ConsoleKey.U: // Undo
+							if (selectedPileIndex != -1) { message = "Najpierw zakończ lub anuluj zaznaczenie (Esc)."; break; }
+							if (!game.UndoLastMove()) message = "Brak ruchów do cofnięcia.";
+							else message = "Cofnięto ruch.";
+							break;
+						case ConsoleKey.Escape: // Anuluj zaznaczenie
+							if (selectedPileIndex != -1) {
+								ResetSelection();
+								message = "Anulowano zaznaczenie.";
+							}
+							break;
 
-					try // Obsługa potencjalnych błędów parsowania komend
-					{
-						switch (command) {
-							case "draw":
-							case "d":
-								if (!game.DrawFromStock()) {
-									Console.WriteLine("Nie można dobrać karty.");
-									Pause();
-								}
-								break;
-
-							case "move":
-							case "m":
-								if (parts.Length < 3) {
-									Console.WriteLine("Nieprawidłowa komenda 'move'. Użycie: move [źródło] [cel] [liczba_kart - opcjonalnie]");
-									Console.WriteLine("Źródła: S (Stock - nie można), W (Waste), F1-F4 (Foundation), T1-T7 (Tableau)");
-									Console.WriteLine("Cele: F1-F4, T1-T7");
-									Pause();
-									continue;
-								}
-								string sourceStr = parts[1].ToUpper();
-								string destStr = parts[2].ToUpper();
-								int cardCount = 1; // Domyślnie przenosimy 1 kartę
-
-								// Sprawdź, czy podano liczbę kart (dla ruchu T->T)
-								if (parts.Length > 3) {
-									if (!int.TryParse(parts[3], out cardCount) || cardCount < 1) {
-										Console.WriteLine("Nieprawidłowa liczba kart. Musi być dodatnią liczbą całkowitą.");
-										Pause();
-										continue;
-									}
-								}
-
-								// Parsowanie źródła
-								PileType sourceType;
-								int sourceIndex = ParsePileString(sourceStr, out sourceType);
-								if (sourceIndex == -1 || sourceType == PileType.Stock) // Nie można ruszać ze Stock bezpośrednio
-								{
-									Console.WriteLine($"Nieprawidłowe źródło: {sourceStr}"); Pause(); continue;
-								}
-
-								// Parsowanie celu
-								PileType destType;
-								int destIndex = ParsePileString(destStr, out destType);
-								if (destIndex == -1 || destType == PileType.Stock || destType == PileType.Waste) // Nie można ruszać na Stock ani Waste
-								{
-									Console.WriteLine($"Nieprawidłowy cel: {destStr}"); Pause(); continue;
-								}
-
-								// Wykonaj ruch
-								if (!game.TryMove(sourceType, sourceIndex, destType, destIndex, cardCount)) {
-									// Komunikat o błędzie jest już wyświetlany w TryMove
-									Pause();
-								}
-								break;
-
-							case "undo":
-							case "u":
-								if (!game.UndoLastMove()) {
-									// Komunikat o błędzie jest już wyświetlany w UndoLastMove
-									Pause();
-								}
-								break;
-
-							case "score":
-							case "h":
-								Console.Clear();
-								game.DisplayHighScores();
-								Console.WriteLine("\nNaciśnij Enter, aby wrócić do gry...");
-								Console.ReadLine();
-								break;
-
-							case "restart":
-							case "r":
-								Console.Write("Czy na pewno chcesz rozpocząć nową grę? (t/n): ");
-								if (Console.ReadLine()?.ToLower() == "t") {
-									goto NewGame; // Użycie goto do przeskoczenia do etykiety NewGame (poniżej pętli while)
-								}
-								break;
-
-							case "quit":
-							case "q":
-								Console.Write("Czy na pewno chcesz zakończyć grę? (t/n): ");
-								if (Console.ReadLine()?.ToLower() == "t") {
-									playAgain = false; // Zakończ pętlę zewnętrzną (while playAgain)
-									goto EndGame; // Użycie goto do wyjścia z pętli gry
-								}
-								break;
-
-							default:
-								Console.WriteLine("Nieznana komenda.");
-								Pause();
-								break;
-						}
-					} catch (Exception ex) {
-						Console.WriteLine($"\nWystąpił nieoczekiwany błąd: {ex.Message}");
-						Console.WriteLine("Spróbuj ponownie lub uruchom grę od nowa.");
-						Pause();
+						// --- Inne ---
+						case ConsoleKey.H: // High Scores
+							if (selectedPileIndex != -1) { message = "Najpierw zakończ lub anuluj zaznaczenie (Esc)."; break; }
+							Console.Clear();
+							game.DisplayHighScores();
+							Console.WriteLine("\nNaciśnij Enter, aby wrócić do gry...");
+							Console.ReadLine();
+							break;
+						case ConsoleKey.R: // Restart
+							if (selectedPileIndex != -1) { message = "Najpierw zakończ lub anuluj zaznaczenie (Esc)."; break; }
+							Console.Write("Czy na pewno chcesz rozpocząć nową grę? (t/n): ");
+							if (Console.ReadKey().KeyChar == 't') goto NewGame; // Użycie goto
+							message = "Anulowano restart."; // Jeśli nie 't'
+							break;
+						case ConsoleKey.Q: // Quit
+							if (selectedPileIndex != -1) { message = "Najpierw zakończ lub anuluj zaznaczenie (Esc)."; break; }
+							Console.Write("Czy na pewno chcesz zakończyć grę? (t/n): ");
+							if (Console.ReadKey().KeyChar == 't') { playAgain = false; goto EndGame; } // Użycie goto
+							message = "Anulowano wyjście."; // Jeśli nie 't'
+							break;
 					}
 				} // Koniec pętli gry (while true)
 
 			EndGame:; // Etykieta dla wyjścia z pętli gry
-
-			NewGame: // Etykieta dla rozpoczęcia nowej gry
+			NewGame:; // Etykieta dla rozpoczęcia nowej gry
 				if (playAgain) {
+					Console.Clear(); // Wyczyść przed komunikatem o nowej grze
 					Console.WriteLine("\nRozpoczynanie nowej gry...");
-					System.Threading.Thread.Sleep(1000); // Krótka pauza
+					System.Threading.Thread.Sleep(1000);
 				}
-
 			} // Koniec pętli ponownego grania (while playAgain)
 
+			Console.CursorVisible = true; // Przywróć kursor systemowy
+			Console.Clear();
 			Console.WriteLine("\nDziękujemy za grę! Do zobaczenia!");
 		}
 
-		// Metoda do wyboru poziomu trudności
-		static bool? ChooseDifficulty() {
+		// Metoda do rysowania stanu gry z uwzględnieniem kursora i zaznaczenia
+		static void DisplayGame(Game game) {
 			Console.Clear();
-			Console.WriteLine("Wybierz poziom trudności:");
-			Console.WriteLine(" 1. Łatwy (dobieranie 1 karty)");
-			Console.WriteLine(" 2. Trudny (dobieranie 3 kart)");
-			Console.WriteLine(" 3. Wyjdź");
-			Console.Write("Wybór: ");
+			Console.OutputEncoding = Encoding.UTF8;
 
-			while (true) {
-				string? choice = Console.ReadLine();
-				switch (choice) {
-					case "1":
-						Console.WriteLine("Wybrano poziom łatwy.");
-						System.Threading.Thread.Sleep(500);
-						return false; // false oznacza tryb łatwy
-					case "2":
-						Console.WriteLine("Wybrano poziom trudny.");
-						System.Threading.Thread.Sleep(500);
-						return true; // true oznacza tryb trudny
-					case "3":
-						return null; // Sygnał do wyjścia z gry
-					default:
-						Console.Write("Nieprawidłowy wybór. Wpisz 1, 2 lub 3: ");
+			// --- Górny rząd: Stock, Waste, Foundations ---
+			Console.Write("Stos [S]: ");
+			DisplayElement(ActiveArea.Stock, 0, 0, game.Stock.IsEmpty ? "[   ]" : "[ * ]", $"({game.Stock.Count})");
+
+			Console.Write("  Odrzucone [W]: ");
+			var visibleWaste = game.Waste.GetVisibleCards(game.IsHardMode);
+			if (visibleWaste.Count == 0) {
+				DisplayElement(ActiveArea.Waste, 0, 0, "[   ]", "");
+			} else {
+				// W Waste zawsze zaznaczamy/kursoryzujemy ostatnią kartę
+				for (int i = 0; i < visibleWaste.Count; i++) {
+					bool isLast = (i == visibleWaste.Count - 1);
+					DisplayElement(ActiveArea.Waste, 0, 0, visibleWaste[i].GetDisplay(), isLast ? "" : " ", isLast); // Tylko ostatnia jest "targetable"
+					if (!isLast) Console.Write(" "); // Dodaj spację między kartami w Waste (jeśli są 3)
+				}
+				// Dopełnienie spacjami dla trybu trudnego, jeśli mniej niż 3 karty
+				if (game.IsHardMode && visibleWaste.Count < 3) {
+					for (int i = 0; i < 3 - visibleWaste.Count; i++) Console.Write("    "); // 4 spacje na kartę
+				}
+			}
+
+			Console.Write("    Stosy Końcowe [F1-F4]: ");
+			for (int i = 0; i < 4; i++) {
+				Card? topCard = game.Foundations[i].PeekTopCard();
+				string display = "[   ]";
+				if (topCard != null) display = topCard.GetDisplay();
+				else {
+					Suit? pileSuit = game.Foundations[i].GetPileSuit();
+					if (pileSuit.HasValue) {
+						char suitChar = '?'; ConsoleColor color = ConsoleColor.White;
+						switch (pileSuit.Value) { /* ... (jak poprzednio) ... */ }
+						// Nie można użyć DisplayElement bezpośrednio z kolorowaniem symbolu
+						// Uproszczenie: wyświetlamy tylko kartę lub puste miejsce
+					}
+				}
+				DisplayElement(ActiveArea.Foundation, i, 0, display, "");
+				Console.Write(" ");
+			}
+			Console.WriteLine($"\nLiczba ruchów: {game.MovesCount}");
+			Console.WriteLine(new string('-', Console.WindowWidth > 0 ? Console.WindowWidth - 1 : 80));
+
+			// --- Kolumny Tableau [T1-T7] ---
+			Console.WriteLine("Kolumny Gry [T1-T7]:");
+			int maxRows = game.Tableaux.Max(t => t.Count);
+
+			for (int row = 0; row < maxRows; row++) {
+				for (int col = 0; col < 7; col++) {
+					var currentTableau = game.Tableaux[col];
+					if (row < currentTableau.Count) {
+						Card card = currentTableau.GetCardsForDisplay()[row];
+						DisplayElement(ActiveArea.Tableau, col, row, card.GetDisplay(), "", card.IsFaceUp); // Tylko odkryte są "targetable"
+						Console.Write(" ");
+					} else {
+						// Jeśli kursor jest na pustym miejscu w kolumnie (można tam położyć Króla)
+						if (currentArea == ActiveArea.Tableau && currentPileIndex == col && currentCardIndex == row && currentTableau.IsEmpty) {
+							SetHighlight(true); // Podświetl puste miejsce
+							Console.Write("[ K ]"); // Wskaż, że można tu położyć Króla
+							SetHighlight(false);
+						} else {
+							Console.Write("    "); // Puste miejsce
+						}
+
+					}
+					Console.Write(" "); // Odstęp między kolumnami
+				}
+				Console.WriteLine();
+			}
+			Console.WriteLine(new string('-', Console.WindowWidth > 0 ? Console.WindowWidth - 1 : 80));
+
+			// Wyświetl informacje o sterowaniu i komunikat
+			Console.WriteLine("Sterowanie: Strzałki - ruch | Enter/Spacja - wybierz/przenieś | Esc - anuluj | D - dobierz | U - cofnij | H - ranking | R - restart | Q - wyjdź");
+			if (!string.IsNullOrEmpty(message)) {
+				Console.ForegroundColor = ConsoleColor.Yellow;
+				Console.WriteLine($"Komunikat: {message}");
+				Console.ResetColor();
+			}
+			// Wyświetl informację o zaznaczeniu
+			if (selectedPileIndex != -1) {
+				Console.ForegroundColor = ConsoleColor.Cyan;
+				string sourceDesc = GetPileDescription(selectedArea, selectedPileIndex);
+				if (selectedArea == ActiveArea.Tableau && selectedCardIndex != -1) {
+					sourceDesc += $" (karta #{selectedCardIndex + 1}{(selectedCardCount > 1 ? $" - {selectedCardCount} kart" : "")})";
+				}
+				Console.WriteLine($"Zaznaczono źródło: {sourceDesc}. Wybierz cel (Enter/Spacja) lub anuluj (Esc).");
+				Console.ResetColor();
+			}
+		}
+
+		// Pomocnicza metoda do wyświetlania elementu z opcjonalnym podświetleniem
+		static void DisplayElement(ActiveArea area, int pileIndex, int cardIndex, string display, string suffix, bool isTargetable = true) {
+			bool isCursorOn = isTargetable && currentArea == area && currentPileIndex == pileIndex && currentCardIndex == cardIndex;
+			bool isSelected = isTargetable && selectedArea == area && selectedPileIndex == pileIndex &&
+							  (area != ActiveArea.Tableau || selectedCardIndex == -1 || (cardIndex >= selectedCardIndex && cardIndex < selectedCardIndex + selectedCardCount));
+
+
+			// Ustalanie koloru karty (jeśli to karta)
+			ConsoleColor cardColor = ConsoleColor.White; // Domyślny dla [ ] lub [ * ]
+			if (display.Length == 3 && display[0] != '[' && display[0] != ' ') // Zakładamy format " XY" lub "XYY"
+			{
+				char suitChar = display[display.Length - 1];
+				if (suitChar == '♥' || suitChar == '♦') cardColor = ConsoleColor.Red;
+				else if (suitChar == '♣' || suitChar == '♠') cardColor = ConsoleColor.DarkGray; // Ciemnoszary dla czarnych
+			}
+
+
+			if (isSelected) Console.BackgroundColor = ConsoleColor.DarkCyan;
+			else if (isCursorOn) Console.BackgroundColor = ConsoleColor.Gray;
+
+			// Ustawienie koloru tekstu karty
+			Console.ForegroundColor = (Console.BackgroundColor == ConsoleColor.Black || Console.BackgroundColor == ConsoleColor.DarkBlue) // Domyślne tła
+									   ? cardColor
+									   : ConsoleColor.Black; // Czarny tekst na jasnym tle
+
+
+			Console.Write(display);
+			Console.ResetColor(); // Resetuj kolory po wyświetleniu elementu
+			Console.Write(suffix); // Wyświetl ewentualny sufiks (np. licznik, spacja)
+		}
+
+		// Pomocnicza metoda do ustawiania podświetlenia (używana rzadko)
+		static void SetHighlight(bool active) {
+			if (active) { Console.BackgroundColor = ConsoleColor.Gray; Console.ForegroundColor = ConsoleColor.Black; } else Console.ResetColor();
+		}
+
+
+		// Logika przesuwania kursora
+		static void MoveCursor(Game game, int dx, int dy) {
+			// Anuluj zaznaczenie przy ruchu kursora
+			if (selectedPileIndex != -1) {
+				ResetSelection();
+				message = "Anulowano zaznaczenie.";
+				// Nie ruszaj kursora od razu po anulowaniu, pozwól użytkownikowi zobaczyć efekt
+				return;
+			}
+
+
+			ActiveArea targetArea = currentArea;
+			int targetPileIndex = currentPileIndex;
+			int targetCardIndex = currentCardIndex;
+
+			switch (currentArea) {
+				case ActiveArea.Stock:
+					if (dx > 0) targetArea = ActiveArea.Waste; // Prawo -> Waste
+					else if (dy > 0) { targetArea = ActiveArea.Tableau; targetPileIndex = 0; targetCardIndex = 0; } // Dół -> T1
+					break;
+				case ActiveArea.Waste:
+					if (dx < 0) targetArea = ActiveArea.Stock; // Lewo -> Stock
+					else if (dx > 0) { targetArea = ActiveArea.Foundation; targetPileIndex = 0; } // Prawo -> F1
+					else if (dy > 0) { targetArea = ActiveArea.Tableau; targetPileIndex = Math.Min(2, game.Tableaux.Count - 1); targetCardIndex = 0; } // Dół -> T2/T3
+																																					   // Nawigacja wewnątrz Waste (jeśli są 3 karty) - niezaimplementowane, zawsze celuje w ostatnią
+					break;
+				case ActiveArea.Foundation:
+					if (dx < 0 && currentPileIndex == 0) targetArea = ActiveArea.Waste; // Lewo z F1 -> Waste
+					else if (dx < 0) targetPileIndex--; // Lewo w F
+					else if (dx > 0 && currentPileIndex < 3) targetPileIndex++; // Prawo w F
+					else if (dy > 0) { targetArea = ActiveArea.Tableau; targetPileIndex = Math.Min(currentPileIndex + 3, game.Tableaux.Count - 1); targetCardIndex = 0; } // Dół -> T4-T7
+					break;
+				case ActiveArea.Tableau:
+					if (dy < 0 && currentCardIndex == 0) // Góra z wierzchu Tableau
+					{
+						if (currentPileIndex == 0) targetArea = ActiveArea.Stock;
+						else if (currentPileIndex <= 2) targetArea = ActiveArea.Waste;
+						else targetArea = ActiveArea.Foundation; targetPileIndex = Math.Min(currentPileIndex - 3, 3);
+						targetCardIndex = 0; // Reset card index when moving up
+					} else if (dy < 0) targetCardIndex--; // Góra wewnątrz Tableau
+					else if (dy > 0) targetCardIndex++; // Dół wewnątrz Tableau
+					else if (dx < 0 && currentPileIndex > 0) targetPileIndex--; // Lewo w T
+					else if (dx > 0 && currentPileIndex < 6) targetPileIndex++; // Prawo w T
+					break;
+			}
+
+			// Walidacja i aktualizacja pozycji kursora
+			ValidateAndSetCursor(game, targetArea, targetPileIndex, targetCardIndex);
+		}
+
+		// Sprawdza poprawność nowej pozycji kursora i ją ustawia
+		static void ValidateAndSetCursor(Game game, ActiveArea area, int pileIndex, int cardIndex) {
+			int maxPileIndex = 0;
+			int maxCardIndex = 0;
+
+			switch (area) {
+				case ActiveArea.Stock: pileIndex = 0; cardIndex = 0; break;
+				case ActiveArea.Waste:
+					pileIndex = 0;
+					// Zawsze celuj w ostatnią kartę w Waste (lub puste miejsce)
+					cardIndex = 0; // Uproszczenie: zawsze indeks 0 dla Waste w logice kursora
+					break;
+				case ActiveArea.Foundation:
+					maxPileIndex = 3;
+					pileIndex = Math.Clamp(pileIndex, 0, maxPileIndex);
+					cardIndex = 0; // W Foundation zawsze celujemy w cały stos
+					break;
+				case ActiveArea.Tableau:
+					maxPileIndex = 6;
+					pileIndex = Math.Clamp(pileIndex, 0, maxPileIndex);
+					// Ustal maksymalny indeks karty (liczba kart lub 0 jeśli pusta)
+					maxCardIndex = Math.Max(0, game.Tableaux[pileIndex].Count - 1);
+					// Jeśli kolumna jest pusta, dozwolony indeks to 0 (reprezentuje puste miejsce)
+					if (game.Tableaux[pileIndex].IsEmpty) maxCardIndex = 0;
+					cardIndex = Math.Clamp(cardIndex, 0, maxCardIndex);
+
+					// Jeśli celujemy w zakrytą kartę, przesuń kursor na ostatnią odkrytą (lub pierwszą, jeśli nie ma odkrytych)
+					Card? targetCard = game.Tableaux[pileIndex].GetCardAt(cardIndex);
+					if (targetCard != null && !targetCard.IsFaceUp) {
+						int firstFaceUp = game.Tableaux[pileIndex].FindFirstFaceUpCardIndex();
+						if (firstFaceUp != -1) cardIndex = firstFaceUp; // Przesuń na pierwszą odkrytą
+						else if (game.Tableaux[pileIndex].Count > 0) cardIndex = game.Tableaux[pileIndex].Count - 1; // Przesuń na ostatnią zakrytą, jeśli nie ma odkrytych
+						else cardIndex = 0; // Pusta kolumna
+					}
+					break;
+			}
+
+			currentArea = area;
+			currentPileIndex = pileIndex;
+			currentCardIndex = cardIndex;
+		}
+
+		// Obsługa Enter/Spacji - zaznaczanie źródła lub wykonywanie ruchu
+		static void HandleSelectionOrMove(Game game) {
+			PileType sourceType = PileType.Stock;
+			int sourceIndex = -1;
+			int sourceCardIndex = -1; // Tylko dla Tableau
+			int sourceCardCount = 1;
+
+			PileType destType = PileType.Stock;
+			int destIndex = -1;
+
+			// --- Jeśli nic nie jest zaznaczone -> zaznacz źródło ---
+			if (selectedPileIndex == -1) {
+				// Sprawdź, czy można zaznaczyć element pod kursorem
+				switch (currentArea) {
+					case ActiveArea.Stock:
+						message = "Nie można przenieść kart bezpośrednio ze stosu [S]. Użyj 'D', aby dobrać.";
+						return; // Nie można wybrać Stock jako źródła
+					case ActiveArea.Waste:
+						if (game.Waste.IsEmpty) { message = "Stos [W] jest pusty."; return; }
+						selectedArea = ActiveArea.Waste;
+						selectedPileIndex = 0;
+						selectedCardIndex = -1; // Nie dotyczy
+						selectedCardCount = 1;
+						message = $"Zaznaczono źródło: {GetPileDescription(selectedArea, selectedPileIndex)}. Wybierz cel.";
+						break;
+					case ActiveArea.Foundation:
+						if (game.Foundations[currentPileIndex].IsEmpty) { message = "Stos [F] jest pusty."; return; }
+						selectedArea = ActiveArea.Foundation;
+						selectedPileIndex = currentPileIndex;
+						selectedCardIndex = -1; // Nie dotyczy
+						selectedCardCount = 1;
+						message = $"Zaznaczono źródło: {GetPileDescription(selectedArea, selectedPileIndex)}. Wybierz cel.";
+						break;
+					case ActiveArea.Tableau:
+						var tableau = game.Tableaux[currentPileIndex];
+						if (tableau.IsEmpty) { message = "Kolumna [T] jest pusta."; return; }
+						// Sprawdź, czy karta pod kursorem jest odkryta
+						Card? card = tableau.GetCardAt(currentCardIndex);
+						if (card == null || !card.IsFaceUp) { message = "Nie można zaznaczyć zakrytej karty."; return; }
+
+						selectedArea = ActiveArea.Tableau;
+						selectedPileIndex = currentPileIndex;
+						selectedCardIndex = currentCardIndex; // Zapamiętaj, którą kartę kliknięto
+						selectedCardCount = tableau.Count - currentCardIndex; // Zaznacz od tej karty do końca
+						message = $"Zaznaczono źródło: {GetPileDescription(selectedArea, selectedPileIndex)} ({selectedCardCount} kart). Wybierz cel.";
 						break;
 				}
 			}
-		}
+			// --- Jeśli źródło jest zaznaczone -> wykonaj ruch ---
+			else {
+				// Pobierz typ i indeks źródła
+				sourceType = ConvertAreaToPileType(selectedArea);
+				sourceIndex = selectedPileIndex;
+				sourceCardCount = selectedCardCount; // Użyj zapisanej liczby kart
 
+				// Pobierz typ i indeks celu (z aktualnej pozycji kursora)
+				destType = ConvertAreaToPileType(currentArea);
+				destIndex = currentPileIndex;
 
-		// Pomocnicza metoda do parsowania stringa reprezentującego stos (np. "T1", "F3", "W")
-		// Zwraca indeks stosu (0-based) i ustawia typ stosu przez parametr 'out'
-		// Zwraca -1 w przypadku błędu.
-		static int ParsePileString(string pileStr, out PileType type) {
-			type = PileType.Stock; // Domyślna wartość na wypadek błędu
-
-			if (string.IsNullOrEmpty(pileStr)) return -1;
-
-			char pileChar = pileStr[0];
-			string indexStr = pileStr.Length > 1 ? pileStr.Substring(1) : "";
-			int index = 0; // Domyślny indeks dla W
-
-			switch (pileChar) {
-				case 'W': // Waste Pile
-					if (pileStr.Length > 1) return -1; // Waste nie ma indeksu (W, nie W1)
-					type = PileType.Waste;
-					return 0; // Zwracamy 0 jako placeholder, bo Waste jest tylko jedno
-
-				case 'F': // Foundation Pile
-					if (!int.TryParse(indexStr, out index) || index < 1 || index > 4) return -1; // Indeksy F1-F4
-					type = PileType.Foundation;
-					return index - 1; // Zwracamy indeks 0-based (0-3)
-
-				case 'T': // Tableau Pile
-					if (!int.TryParse(indexStr, out index) || index < 1 || index > 7) return -1; // Indeksy T1-T7
-					type = PileType.Tableau;
-					return index - 1; // Zwracamy indeks 0-based (0-6)
-
-				default:
-					return -1; // Nieznany typ stosu
+				// Sprawdzenia poprawności celu
+				if (destType == PileType.Stock || destType == PileType.Waste) {
+					message = "Nieprawidłowy cel ruchu.";
+					ResetSelection(); // Anuluj zaznaczenie po błędzie
+					return;
+				}
+				// Nie można przenieść na ten sam stos
+				if (sourceType == destType && sourceIndex == destIndex) {
+					message = "Nie można przenieść na ten sam stos.";
+					ResetSelection();
+					return;
+				}
+				// Wykonaj próbę ruchu
+				if (game.TryMove(sourceType, sourceIndex, destType, destIndex, sourceCardCount)) {
+					message = $"Przeniesiono z {GetPileDescription(selectedArea, selectedPileIndex)} do {GetPileDescription(currentArea, currentPileIndex)}.";
+				} else {
+					message = "Ruch niedozwolony.";
+				}
+				// Zawsze resetuj zaznaczenie po próbie ruchu (udanej lub nie)
+				ResetSelection();
 			}
 		}
 
-		// Prosta metoda pauzująca grę do czasu naciśnięcia Enter
-		static void Pause() {
-			Console.WriteLine("\nNaciśnij Enter, aby kontynuować...");
-			Console.ReadLine();
+		// Resetuje stan zaznaczenia
+		static void ResetSelection() {
+			selectedPileIndex = -1;
+			selectedCardIndex = -1;
+			selectedCardCount = 0;
+		}
+
+		// Konwertuje ActiveArea na PileType
+		static PileType ConvertAreaToPileType(ActiveArea area) {
+			switch (area) {
+				case ActiveArea.Stock: return PileType.Stock;
+				case ActiveArea.Waste: return PileType.Waste;
+				case ActiveArea.Foundation: return PileType.Foundation;
+				case ActiveArea.Tableau: return PileType.Tableau;
+				default: throw new ArgumentOutOfRangeException(nameof(area));
+			}
+		}
+
+		// Zwraca opis stosu dla komunikatów
+		static string GetPileDescription(ActiveArea area, int index) {
+			switch (area) {
+				case ActiveArea.Stock: return "Stos [S]";
+				case ActiveArea.Waste: return "Odrzucone [W]";
+				case ActiveArea.Foundation: return $"Fundacja [F{index + 1}]";
+				case ActiveArea.Tableau: return $"Kolumna [T{index + 1}]";
+				default: return "Nieznany";
+			}
+		}
+
+
+		// Metoda do wyboru poziomu trudności - bez zmian
+		static bool? ChooseDifficulty() {
+			Console.Clear(); Console.WriteLine("Wybierz poziom trudności:\n 1. Łatwy (dobieranie 1 karty)\n 2. Trudny (dobieranie 3 kart)\n 3. Wyjdź"); Console.Write("Wybór: ");
+			while (true) {
+				string? choice = Console.ReadLine();
+				switch (choice) {
+					case "1": Console.WriteLine("Wybrano poziom łatwy."); System.Threading.Thread.Sleep(500); return false;
+					case "2": Console.WriteLine("Wybrano poziom trudny."); System.Threading.Thread.Sleep(500); return true;
+					case "3": return null;
+					default: Console.Write("Nieprawidłowy wybór. Wpisz 1, 2 lub 3: "); break;
+				}
+			}
 		}
 	}
 }
