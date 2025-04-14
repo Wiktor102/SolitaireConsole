@@ -41,24 +41,24 @@ namespace SolitaireConsole {
                 return "[ ]"; // Reprezentacja zakrytej karty
             }
 
-            string rankString;
-            switch (Rank) {
-                case Rank.Ace: rankString = "A"; break;
-                case Rank.Jack: rankString = "J"; break;
-                case Rank.Queen: rankString = "Q"; break;
-                case Rank.King: rankString = "K"; break;
-                case Rank.Ten: rankString = "T"; break; // Używamy T dla 10 dla spójnej szerokości
-                default: rankString = ((int)Rank).ToString(); break;
-            }
+            string rankString = Rank switch
+            {
+                Rank.Ace => "A",
+                Rank.Jack => "J",
+                Rank.Queen => "Q",
+                Rank.King => "K",
+                Rank.Ten => "T",
+                _ => ((int)Rank).ToString(),
+            };
 
-            char suitChar;
-            switch (Suit) {
-                case Suit.Hearts: suitChar = '♥'; break;
-                case Suit.Diamonds: suitChar = '♦'; break;
-                case Suit.Clubs: suitChar = '♣'; break;
-                case Suit.Spades: suitChar = '♠'; break;
-                default: suitChar = '?'; break; // Na wypadek błędu
-            }
+            char suitChar = Suit switch
+            {
+                Suit.Hearts => '♥',
+                Suit.Diamonds => '♦',
+                Suit.Clubs => '♣',
+                Suit.Spades => '♠',
+                _ => '?',
+            };
 
             // Dodajemy spację dla jednocyfrowych rang dla wyrównania
             return $"{(rankString.Length == 1 ? " " : "")}{rankString}{suitChar}";
