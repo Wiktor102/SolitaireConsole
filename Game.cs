@@ -7,7 +7,7 @@ namespace SolitaireConsole {
 		public WastePile Waste { get; private set; }
 		public List<FoundationPile> Foundations { get; private set; }
 		public List<TableauPile> Tableaux { get; private set; }
-		public bool IsHardMode { get; private set; } // Poziom trudności
+		public DifficultyLevel Difficulty { get; private set; } // Zmieniono z IsHardMode (bool) na Difficulty (enum)	
 		public int MovesCount { get; private set; } // Licznik ruchów
 
 		private const int MaxUndoSteps = 3; // Maksymalna liczba cofnięć
@@ -15,12 +15,9 @@ namespace SolitaireConsole {
 
 		private HighScoreManager highScoreManager; // Zarządzanie najlepszymi wynikami
 
-		// Enum do sygnalizowania wyniku zakończenia gry
-		public enum GameResult { Continue, Restart, Quit }
-
-		// Konstruktor inicjalizujący nową grę
-		public Game(bool hardMode) {
-			IsHardMode = hardMode;
+		 // Zaktualizowany konstruktor używający DifficultyLevel zamiast bool
+		public Game(DifficultyLevel difficulty) {
+			Difficulty = difficulty;
 			Stock = new StockPile();
 			Waste = new WastePile();
 			Foundations = new List<FoundationPile>(4);
@@ -55,7 +52,7 @@ namespace SolitaireConsole {
 				Console.Write("[   ]");
 			} else {
 				var wasteCards = Waste.GetAllCards();
-				int startIndex = IsHardMode ? Math.Max(0, wasteCards.Count - 3) : Math.Max(0, wasteCards.Count - 1);
+				int startIndex = Difficulty == DifficultyLevel.Hard ? Math.Max(0, wasteCards.Count - 3) : Math.Max(0, wasteCards.Count - 1);
 				// W trybie trudnym pokazujemy do 3 kart, w łatwym 1
 				// Ale tylko wierzchnia jest grywalna
 				for (int i = startIndex; i < wasteCards.Count; i++) {
@@ -63,7 +60,7 @@ namespace SolitaireConsole {
 					Console.Write(" ");
 				}
 				// Jeśli w trybie trudnym jest mniej niż 3, dopełnij spacjami
-				if (IsHardMode && wasteCards.Count < 3) {
+				if (Difficulty == DifficultyLevel.Hard && wasteCards.Count < 3) {
 					for (int i = 0; i < 3 - wasteCards.Count; ++i) Console.Write("    ");
 				}
 
@@ -170,8 +167,8 @@ namespace SolitaireConsole {
 				return true; // Pomyślnie zresetowano stos
 			}
 
-			// Dobierz karty ze Stock do Waste
-			int cardsToDraw = IsHardMode ? 3 : 1;
+			// Dobierz karty ze Stock do Waste - zmieniono logikę na użycie enuma
+			int cardsToDraw = Difficulty == DifficultyLevel.Hard ? 3 : 1;
 			List<Card> drawnCards = Stock.Draw(cardsToDraw);
 
 			if (drawnCards.Count > 0) {
