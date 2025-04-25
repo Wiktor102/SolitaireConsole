@@ -1,15 +1,14 @@
-﻿using System.Text;
+using System.Text;
 
 namespace SolitaireConsole {
 	// Główna klasa programu
 	class Program {
 		static void Main(string[] args) {
-			Console.Title = "Pasjans Konsolowy"; // Ustawia tytuł okna konsoli
+			Console.Title = "Konsolowy Pasjans"; // Ustawia tytuł okna konsoli
 			Console.OutputEncoding = Encoding.UTF8; // Ważne dla polskich znaków i symboli kart
 
 			bool playAgain = true;
 			while (playAgain) {
-				// Wybór poziomu trudności używając nowej klasy DifficultySelector
 				var difficultySelector = new DifficultySelector();
 				DifficultyLevel? difficulty = difficultySelector.ChooseDifficulty();
 				if (!difficulty.HasValue) {
@@ -18,9 +17,7 @@ namespace SolitaireConsole {
 				}
 
 				Game game = new(difficulty.Value); // Rozpocznij nową grę
-
-				// Uruchom główną pętlę gry (teraz w klasie Game)
-				GameResult result = game.RunGameLoop();
+				GameResult result = game.RunGameLoop(); // Uruchom główną pętlę gry
 
 				// Obsłuż wynik gry
 				switch (result) {
