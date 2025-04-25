@@ -1,18 +1,14 @@
 {
   "Version": 1,
-  "WorkspaceRootPath": "C:\\Users\\wikto\\Documents\\dev\\SolitaireConsole\\",
+  "WorkspaceRootPath": "F:\\2025\\SolitaireConsole\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{818A6AC4-7DC7-47CC-987B-D86AD5F13DA5}|SolitaireConsole.csproj|c:\\users\\wikto\\documents\\dev\\solitaireconsole\\card.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{818A6AC4-7DC7-47CC-987B-D86AD5F13DA5}|SolitaireConsole.csproj|solutionrelative:card.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{818A6AC4-7DC7-47CC-987B-D86AD5F13DA5}|SolitaireConsole.csproj|c:\\users\\wikto\\documents\\dev\\solitaireconsole\\ui\\displaystrategy.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "AbsoluteMoniker": "D:0:0:{818A6AC4-7DC7-47CC-987B-D86AD5F13DA5}|SolitaireConsole.csproj|f:\\2025\\solitaireconsole\\ui\\displaystrategy.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{818A6AC4-7DC7-47CC-987B-D86AD5F13DA5}|SolitaireConsole.csproj|solutionrelative:ui\\displaystrategy.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{818A6AC4-7DC7-47CC-987B-D86AD5F13DA5}|SolitaireConsole.csproj|c:\\users\\wikto\\documents\\dev\\solitaireconsole\\cardpiles\\stockpile.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{818A6AC4-7DC7-47CC-987B-D86AD5F13DA5}|SolitaireConsole.csproj|solutionrelative:cardpiles\\stockpile.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{818A6AC4-7DC7-47CC-987B-D86AD5F13DA5}|SolitaireConsole.csproj|f:\\2025\\solitaireconsole\\ui\\difficultyselector.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{818A6AC4-7DC7-47CC-987B-D86AD5F13DA5}|SolitaireConsole.csproj|solutionrelative:ui\\difficultyselector.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     }
   ],
   "DocumentGroupContainers": [
@@ -22,21 +18,8 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 0,
+          "SelectedChildIndex": 3,
           "Children": [
-            {
-              "$type": "Document",
-              "DocumentIndex": 0,
-              "Title": "Card.cs",
-              "DocumentMoniker": "C:\\Users\\wikto\\Documents\\dev\\SolitaireConsole\\Card.cs",
-              "RelativeDocumentMoniker": "Card.cs",
-              "ToolTip": "C:\\Users\\wikto\\Documents\\dev\\SolitaireConsole\\Card.cs",
-              "RelativeToolTip": "Card.cs",
-              "ViewState": "AgIAAA8AAAAAAAAAAAA1wBwAAAAEAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-04-25T13:19:49.133Z",
-              "EditorCaption": ""
-            },
             {
               "$type": "Bookmark",
               "Name": "ST:0:0:{d78612c7-9962-4b83-95d9-268046dad23a}"
@@ -51,28 +34,28 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 2,
-              "Title": "StockPile.cs",
-              "DocumentMoniker": "C:\\Users\\wikto\\Documents\\dev\\SolitaireConsole\\CardPiles\\StockPile.cs",
-              "RelativeDocumentMoniker": "CardPiles\\StockPile.cs",
-              "ToolTip": "C:\\Users\\wikto\\Documents\\dev\\SolitaireConsole\\CardPiles\\StockPile.cs",
-              "RelativeToolTip": "CardPiles\\StockPile.cs",
-              "ViewState": "AgIAADAAAAAAAAAAAAAowEEAAAAcAAAAAAAAAA==",
+              "DocumentIndex": 0,
+              "Title": "DisplayStrategy.cs",
+              "DocumentMoniker": "F:\\2025\\SolitaireConsole\\UI\\DisplayStrategy.cs",
+              "RelativeDocumentMoniker": "UI\\DisplayStrategy.cs",
+              "ToolTip": "F:\\2025\\SolitaireConsole\\UI\\DisplayStrategy.cs",
+              "RelativeToolTip": "UI\\DisplayStrategy.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAA4AAAAUAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-04-25T13:12:05.617Z",
+              "WhenOpened": "2025-04-25T17:45:08.686Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
               "DocumentIndex": 1,
-              "Title": "DisplayStrategy.cs",
-              "DocumentMoniker": "C:\\Users\\wikto\\Documents\\dev\\SolitaireConsole\\UI\\DisplayStrategy.cs",
-              "RelativeDocumentMoniker": "UI\\DisplayStrategy.cs",
-              "ToolTip": "C:\\Users\\wikto\\Documents\\dev\\SolitaireConsole\\UI\\DisplayStrategy.cs",
-              "RelativeToolTip": "UI\\DisplayStrategy.cs",
-              "ViewState": "AgIAAGcAAAAAAAAAAAAewIgAAAAmAAAAAAAAAA==",
+              "Title": "DifficultySelector.cs",
+              "DocumentMoniker": "F:\\2025\\SolitaireConsole\\UI\\DifficultySelector.cs",
+              "RelativeDocumentMoniker": "UI\\DifficultySelector.cs",
+              "ToolTip": "F:\\2025\\SolitaireConsole\\UI\\DifficultySelector.cs",
+              "RelativeToolTip": "UI\\DifficultySelector.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABcAAAAfAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-04-25T09:31:00.305Z",
+              "WhenOpened": "2025-04-25T17:29:49.386Z",
               "EditorCaption": ""
             }
           ]

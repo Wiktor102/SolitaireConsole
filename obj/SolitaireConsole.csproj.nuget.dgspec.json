@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\wikto\\Documents\\dev\\SolitaireConsole\\SolitaireConsole.csproj": {}
+    "F:\\2025\\SolitaireConsole\\SolitaireConsole.csproj": {}
   },
   "projects": {
-    "C:\\Users\\wikto\\Documents\\dev\\SolitaireConsole\\SolitaireConsole.csproj": {
+    "F:\\2025\\SolitaireConsole\\SolitaireConsole.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\wikto\\Documents\\dev\\SolitaireConsole\\SolitaireConsole.csproj",
+        "projectUniqueName": "F:\\2025\\SolitaireConsole\\SolitaireConsole.csproj",
         "projectName": "SolitaireConsole",
-        "projectPath": "C:\\Users\\wikto\\Documents\\dev\\SolitaireConsole\\SolitaireConsole.csproj",
+        "projectPath": "F:\\2025\\SolitaireConsole\\SolitaireConsole.csproj",
         "packagesPath": "C:\\Users\\wikto\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\wikto\\Documents\\dev\\SolitaireConsole\\obj\\",
+        "outputPath": "F:\\2025\\SolitaireConsole\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
@@ -65,7 +65,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.201/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.203/PortableRuntimeIdentifierGraph.json"
         }
       }
     }

@@ -2,22 +2,22 @@ using System.Text;
 
 namespace SolitaireConsole {
 	/// <summary>
-	/// Klasa odpowiedzialna za wyúwietlanie menu wyboru poziomu trudnoúci
+	/// Klasa odpowiedzialna za wy≈õwietlanie menu wyboru poziomu trudno≈õci
 	/// </summary>
 	public class DifficultySelector {
-		private string[] options = ["£atwy (dobieranie 1 karty)", "Trudny (dobieranie 3 kart)", "Wyjdü"];
+		private string[] options = ["≈Åatwy (dobieranie 1 karty)", "Trudny (dobieranie 3 kart)", "Wyjd≈∫"];
 		private int selectedIndex = 0;
 
 		/// <summary>
-		/// Wyúwietla menu wyboru poziomu trudnoúci i zwraca wybrany poziom
+		/// Wy≈õwietla menu wyboru poziomu trudno≈õci i zwraca wybrany poziom
 		/// </summary>
-		/// <returns>DifficultyLevel.Easy, DifficultyLevel.Hard lub null dla wyjúcia</returns>
+		/// <returns>DifficultyLevel.Easy, DifficultyLevel.Hard lub null dla wyj≈õcia</returns>
 		public DifficultyLevel? ChooseDifficulty() {
 			ConsoleKeyInfo key;
 
 			do {
 				DisplayMenu();
-				key = Console.ReadKey(true); // true - nie wyúwietlaj wciúniÍtego klawisza
+				key = Console.ReadKey(true); // true - nie wy≈õwietlaj wci≈õniƒôtego klawisza
 				HandleKeyInput(key);
 
 				if (key.Key == ConsoleKey.Enter || key.Key == ConsoleKey.Escape) {
@@ -27,11 +27,11 @@ namespace SolitaireConsole {
 		}
 
 		/// <summary>
-		/// Wyúwietla menu wyboru poziomu trudnoúci
+		/// Wy≈õwietla menu wyboru poziomu trudno≈õci
 		/// </summary>
 		private void DisplayMenu() {
 			Console.Clear();
-			Console.WriteLine("Wybierz poziom trudnoúci (uøyj strza≥ek gÛra/dÛ≥ i Enter):");
+			Console.WriteLine("Wybierz poziom trudno≈õci (u≈ºyj strza≈Çek g√≥ra/d√≥≈Ç i Enter):");
 			Console.WriteLine("---------------------------------------------------------");
 
 			for (int i = 0; i < options.Length; i++) {
@@ -42,23 +42,23 @@ namespace SolitaireConsole {
 		}
 
 		/// <summary>
-		/// Wyúwietla pojedynczπ opcjÍ menu
+		/// Wy≈õwietla pojedynczƒÖ opcjƒô menu
 		/// </summary>
 		private void DisplayMenuItem(int index) {
 			if (index == selectedIndex) {
 				Console.BackgroundColor = ConsoleColor.Gray;
 				Console.ForegroundColor = ConsoleColor.Black;
-				Console.Write("> "); // Wskaünik wybranej opcji
+				Console.Write("> "); // Wska≈∫nik wybranej opcji
 			} else {
 				Console.Write("  ");
 			}
 
 			Console.WriteLine(options[index]);
-			Console.ResetColor(); // Resetuj kolory po kaødej opcji
+			Console.ResetColor(); // Resetuj kolory po ka≈ºdej opcji
 		}
 
 		/// <summary>
-		/// Obs≥uguje naciúniÍcie klawiszy (strza≥ki gÛra/dÛ≥)
+		/// Obs≈Çuguje naci≈õniƒôcie klawiszy (strza≈Çki g√≥ra/d√≥≈Ç)
 		/// </summary>
 		private void HandleKeyInput(ConsoleKeyInfo key) {
 			switch (key.Key) {
@@ -68,34 +68,34 @@ namespace SolitaireConsole {
 				case ConsoleKey.DownArrow:
 					UpdateSelectedIndex(1);
 					break;
-				case ConsoleKey.Escape: // Dodatkowa opcja wyjúcia przez Escape
-					selectedIndex = options.Length - 1; // Ustaw na "Wyjdü"
+				case ConsoleKey.Escape: // Dodatkowa opcja wyj≈õcia przez Escape
+					selectedIndex = options.Length - 1; // Ustaw na "Wyjd≈∫"
 					break;
 			}
 		}
 
 		/// <summary>
-		/// Aktualizuje indeks wybranej opcji z odpowiedniπ obs≥ugπ zawijania
+		/// Aktualizuje indeks wybranej opcji z odpowiedniƒÖ obs≈ÇugƒÖ zawijania
 		/// </summary>
 		private void UpdateSelectedIndex(int direction) {
 			if (direction < 0) {
-				// PrzesuÒ w gÛrÍ (z zawijaniem)
+				// Przesu≈Ñ w g√≥rƒô (z zawijaniem)
 				selectedIndex = (selectedIndex == 0) ? options.Length - 1 : selectedIndex - 1;
 			} else {
-				// PrzesuÒ w dÛ≥ (z zawijaniem)
+				// Przesu≈Ñ w d√≥≈Ç (z zawijaniem)
 				selectedIndex = (selectedIndex == options.Length - 1) ? 0 : selectedIndex + 1;
 			}
 		}
 
 		/// <summary>
-		/// Przetwarza wybranπ opcjÍ i zwraca odpowiedniπ wartoúÊ
+		/// Przetwarza wybranƒÖ opcjƒô i zwraca odpowiedniƒÖ warto≈õƒá
 		/// </summary>
 		private DifficultyLevel? ProcessSelection() {
-			Console.Clear(); // WyczyúÊ menu przed wyúwietleniem komunikatu
+			Console.Clear(); // Wyczy≈õƒá menu przed wy≈õwietleniem komunikatu
 
 			switch (selectedIndex) {
 				case 0:
-					Console.WriteLine("Wybrano poziom ≥atwy.");
+					Console.WriteLine("Wybrano poziom ≈Çatwy.");
 					Thread.Sleep(500);
 					return DifficultyLevel.Easy;
 				case 1:
@@ -103,9 +103,9 @@ namespace SolitaireConsole {
 					Thread.Sleep(500);
 					return DifficultyLevel.Hard;
 				case 2:
-					Console.WriteLine("Wyjúcie z gry.");
+					Console.WriteLine("Wyj≈õcie z gry.");
 					Thread.Sleep(500);
-					return null; // Sygna≥ do wyjúcia z gry
+					return null; // Sygna≈Ç do wyj≈õcia z gry
 				default:
 					return null;
 			}
