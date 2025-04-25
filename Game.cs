@@ -1,4 +1,7 @@
 using System.Text;
+using SolitaireConsole.CardPiles;
+using SolitaireConsole.UI;
+using SolitaireConsole.Utils;
 
 namespace SolitaireConsole {
 	// Główna klasa zarządzająca logiką gry
@@ -11,132 +14,33 @@ namespace SolitaireConsole {
 		public int MovesCount { get; private set; } // Licznik ruchów
 
 		private const int MaxUndoSteps = 3; // Maksymalna liczba cofnięć
-		private Stack<MoveRecord> moveHistory; // Stos do przechowywania historii ruchów
+		private readonly Stack<MoveRecord> moveHistory; // Stos do przechowywania historii ruchów
 
-		private HighScoreManager highScoreManager; // Zarządzanie najlepszymi wynikami
+		private readonly HighScoreManager highScoreManager; // Zarządzanie najlepszymi wynikami
 
-		 // Zaktualizowany konstruktor używający DifficultyLevel zamiast bool
+		private readonly DisplayStrategy displayStrategy;
+
+		// Updated constructor
 		public Game(DifficultyLevel difficulty) {
 			Difficulty = difficulty;
 			Stock = new StockPile();
-			Waste = new WastePile();
+			Waste = new WastePile(difficulty);
 			Foundations = new List<FoundationPile>(4);
 			Tableaux = new List<TableauPile>(7);
 			moveHistory = new Stack<MoveRecord>();
 			MovesCount = 0;
-			highScoreManager = new HighScoreManager("highscores.txt"); // Plik do zapisu wyników
+			highScoreManager = new HighScoreManager("highscores.txt");
+			displayStrategy = new ConsoleDisplayStrategy(this);
 
-			// Inicjalizacja pustych stosów końcowych i kolumn gry
+			// Initialize empty Foundation and Tableau piles
 			for (int i = 0; i < 4; i++) Foundations.Add(new FoundationPile());
 			for (int i = 0; i < 7; i++) Tableaux.Add(new TableauPile());
 
-			// Rozdanie kart do kolumn Tableau
+			// Deal cards to Tableau piles
 			for (int i = 0; i < 7; i++) {
-				// Kolumna 'i' otrzymuje 'i+1' kart
 				List<Card> cardsToDeal = Stock.DealInitialTableauCards(i + 1);
 				Tableaux[i].DealInitialCards(cardsToDeal);
 			}
-		}
-
-		// Metoda rysująca aktualny stan gry w konsoli
-		public void DisplayGame() {
-			Console.Clear(); // Czyści konsolę przed rysowaniem
-			Console.OutputEncoding = Encoding.UTF8; // Ustawienie kodowania dla symboli kart
-
-			// --- Rysowanie górnej części: Stock, Waste, Foundations ---
-			Console.WriteLine("--- Pasjans ---");
-			Console.Write($"Stos [S]: {(Stock.IsEmpty ? "[   ]" : "[ * ]")} ({Stock.Count})   "); // Wyświetla [ * ] jeśli są karty, [   ] jeśli pusty
-			Console.Write("Odrzucone [W]: ");
-			// Wyświetla 1 lub 3 karty z Waste w zależności od trybu
-			if (Waste.IsEmpty) {
-				Console.Write("[   ]");
-			} else {
-				var wasteCards = Waste.GetAllCards();
-				int startIndex = Difficulty == DifficultyLevel.Hard ? Math.Max(0, wasteCards.Count - 3) : Math.Max(0, wasteCards.Count - 1);
-				// W trybie trudnym pokazujemy do 3 kart, w łatwym 1
-				// Ale tylko wierzchnia jest grywalna
-				for (int i = startIndex; i < wasteCards.Count; i++) {
-					DisplayCard(wasteCards[i]);
-					Console.Write(" ");
-				}
-				// Jeśli w trybie trudnym jest mniej niż 3, dopełnij spacjami
-				if (Difficulty == DifficultyLevel.Hard && wasteCards.Count < 3) {
-					for (int i = 0; i < 3 - wasteCards.Count; ++i) Console.Write("    ");
-				}
-
-			}
-
-			Console.Write("    Stosy Końcowe [F1-F4]: ");
-			for (int i = 0; i < 4; i++) {
-				Card? topCard = Foundations[i].PeekTopCard();
-				if (topCard != null) {
-					DisplayCard(topCard);
-				} else {
-					// Wyświetl symbol koloru, jeśli jest ustawiony, inaczej puste miejsce
-					Suit? pileSuit = Foundations[i].GetPileSuit();
-					if (pileSuit.HasValue) {
-						char suitChar = '?';
-						ConsoleColor color = ConsoleColor.White;
-						switch (pileSuit.Value) {
-							case Suit.Hearts: suitChar = '♥'; color = ConsoleColor.Red; break;
-							case Suit.Diamonds: suitChar = '♦'; color = ConsoleColor.Red; break;
-							case Suit.Clubs: suitChar = '♣'; color = ConsoleColor.DarkGray; break; // Użyj DarkGray dla czarnych
-							case Suit.Spades: suitChar = '♠'; color = ConsoleColor.DarkGray; break;
-						}
-						Console.ForegroundColor = color;
-						Console.Write($"[ {suitChar} ]");
-						Console.ResetColor();
-					} else {
-						Console.Write("[   ]"); // Pusty stos
-					}
-				}
-				Console.Write(" ");
-			}
-			Console.WriteLine($"\nLiczba ruchów: {MovesCount}");
-			Console.WriteLine(new string('-', Console.WindowWidth > 0 ? Console.WindowWidth - 1 : 80)); // Linia oddzielająca
-
-			// --- Rysowanie kolumn Tableau [T1-T7] ---
-			Console.WriteLine("Kolumny Gry [T1-T7]:");
-
-			// Znajdź maksymalną wysokość kolumny Tableau
-			int maxRows = 0;
-			foreach (var tableau in Tableaux) {
-				maxRows = Math.Max(maxRows, tableau.Count);
-			}
-
-			// Rysuj wiersz po wierszu
-			for (int row = -1; row < maxRows; row++) {
-				for (int col = 0; col < 7; col++) {
-					if (row == -1) { // Nagłówek kolumny
-						Console.Write($" T{col + 1}  ");
-						continue;
-					}
-
-					var currentTableau = Tableaux[col];
-					if (row < currentTableau.Count) {
-						// Jeśli karta istnieje w tym wierszu i kolumnie
-						DisplayCard(currentTableau.GetCardsForDisplay()[row]);
-						Console.Write(" "); // Odstęp między kartami w kolumnie
-					} else {
-						// Puste miejsce, jeśli kolumna jest krótsza
-						Console.Write("    "); // 4 spacje dla wyrównania
-					}
-					Console.Write(" "); // Odstęp między kolumnami
-				}
-				Console.WriteLine(); // Nowa linia dla następnego wiersza kart
-			}
-			Console.WriteLine(new string('-', Console.WindowWidth > 0 ? Console.WindowWidth - 1 : 80)); // Linia oddzielająca
-		}
-
-		// Pomocnicza metoda do wyświetlania pojedynczej karty z odpowiednim kolorem
-		private void DisplayCard(Card card) {
-			if (card.IsFaceUp) {
-				Console.ForegroundColor = (card.Color == CardColor.Red) ? ConsoleColor.Red : ConsoleColor.DarkGray; // Ciemnoszary dla czarnych dla lepszej widoczności na niektórych tłach
-			} else {
-				Console.ForegroundColor = ConsoleColor.White; // Kolor dla zakrytych kart
-			}
-			Console.Write(card.GetDisplay());
-			Console.ResetColor(); // Resetuj kolor po wyświetleniu karty
 		}
 
 		// Metoda do obsługi dobierania kart ze stosu rezerwowego (Stock)
@@ -154,14 +58,14 @@ namespace SolitaireConsole {
 				// Zapisz stan PRZED resetem (jako specjalny ruch "reset")
 				// Tworzymy "pseudo" ruch resetu, aby móc go cofnąć
 				// Przechowujemy karty z Waste, które zostaną przeniesione
-				var wasteCardsBeforeReset = Waste.GetAllCards();
+				var wasteCardsBeforeReset = Waste.Cards;
 				// Używamy specjalnych indeksów/typów, aby zidentyfikować reset
 				var resetRecord = new MoveRecord(PileType.Waste, -1, PileType.Stock, -1, wasteCardsBeforeReset, false, false);
 				if (moveHistory.Count >= MaxUndoSteps) moveHistory.Pop(); // Usuń najstarszy ruch, jeśli stos jest pełny
 				moveHistory.Push(resetRecord);
 
 
-				Stock.Reset(Waste.GetAllCards()); // Przenieś karty z Waste
+				Stock.Reset(Waste.Cards); // Przenieś karty z Waste
 				Waste.Clear(); // Wyczyść Waste
 				MovesCount++; // Reset liczy się jako ruch
 				return true; // Pomyślnie zresetowano stos
@@ -205,7 +109,7 @@ namespace SolitaireConsole {
 			// 1. Z Waste do Foundation lub Tableau
 			if (sourceType == PileType.Waste) {
 				if (cardCount != 1) { Console.WriteLine("Błąd: Można przenieść tylko jedną kartę ze stosu odrzuconych."); return false; }
-				Card? card = Waste.GetPlayableCard(); // Zawsze wierzchnia
+				Card? card = Waste.PeekTopCard(); // Zawsze wierzchnia
 				if (card == null) { Console.WriteLine("Błąd: Stos odrzuconych jest pusty."); return false; }
 
 				if (destPile.CanAddCard(card)) {
@@ -406,7 +310,7 @@ namespace SolitaireConsole {
 		}
 
 		// Pomocnicza metoda do porównywania list kart (proste porównanie referencji lub wartości)
-		private bool AreCardListsEqual(List<Card> list1, List<Card> list2) {
+		private static bool AreCardListsEqual(List<Card> list1, List<Card> list2) {
 			if (list1.Count != list2.Count) return false;
 			for (int i = 0; i < list1.Count; i++) {
 				// Porównujemy Suit i Rank, bo to te same obiekty Card
@@ -442,7 +346,7 @@ namespace SolitaireConsole {
 
 		// Metoda do obsługi zakończenia gry (wygranej)
 		public void HandleWin() {
-			DisplayGame(); // Pokaż finalny stan planszy
+			displayStrategy.Display(); // Wyświetl stan gry przed zakończeniem
 			Console.WriteLine("\n*************************************");
 			Console.WriteLine("* Gratulacje! Wygrałeś w Pasjansa! *");
 			Console.WriteLine($"* Ukończyłeś grę w {MovesCount} ruchach.    *");
@@ -471,7 +375,7 @@ namespace SolitaireConsole {
 		// Metoda głównej pętli gry (przeniesiona z Program.cs)
 		public GameResult RunGameLoop() {
 			while (true) {
-				DisplayGame(); // Wyświetl stan gry
+				displayStrategy.Display(); // Wyświetl stan gry
 
 				// Sprawdź warunek zwycięstwa
 				if (CheckWinCondition()) {
@@ -599,7 +503,7 @@ namespace SolitaireConsole {
 		// Pomocnicza metoda do parsowania stringa reprezentującego stos (np. "T1", "F3", "W")
 		// Zwraca indeks stosu (0-based) i ustawia typ stosu przez parametr 'out'
 		// Zwraca -1 w przypadku błędu.
-		private int ParsePileString(string pileStr, out PileType type) {
+		private static int ParsePileString(string pileStr, out PileType type) {
 			type = PileType.Stock; // Domyślna wartość na wypadek błędu
 
 			if (string.IsNullOrEmpty(pileStr)) return -1;
@@ -630,9 +534,20 @@ namespace SolitaireConsole {
 		}
 
 		// Prosta metoda pauzująca grę do czasu naciśnięcia Enter
-		private void Pause() {
+		private static void Pause() {
 			Console.WriteLine("\nNaciśnij Enter, aby kontynuować...");
 			Console.ReadLine();
 		}
+	}
+
+	// Klasa reprezentująca pojedynczy ruch (do mechanizmu Undo)
+	public class MoveRecord(PileType sourceType, int sourceIndex, PileType destType, int destIndex, List<Card> movedCards, bool flipped, bool foundationSet) {
+		public PileType SourcePileType { get; } = sourceType;
+		public int SourcePileIndex { get; } = sourceIndex;
+		public PileType DestPileType { get; } = destType;
+		public int DestPileIndex { get; } = destIndex;
+		public List<Card> MovedCards { get; } = movedCards; // Przechowujemy kopię listy
+		public bool WasSourceTopCardFlipped { get; } = flipped;
+		public bool WasDestFoundationSuitSet { get; } = foundationSet;
 	}
 }

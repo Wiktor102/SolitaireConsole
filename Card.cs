@@ -1,125 +1,45 @@
+using SolitaireConsole.Utils;
+
 namespace SolitaireConsole {
-    // Enum reprezentujący kolory kart (Czerwony/Czarny)
-    public enum CardColor {
-        Red,
-        Black
-    }
+	// Enum reprezentujący kolory kart (Czerwony/Czarny)
+	public enum CardColor {
+		Red,
+		Black
+	}
 
-    // Enum reprezentujący kolory kart (kier, karo, pik, trefl)
-    public enum Suit {
-        Hearts,   // Kier ♥ (Czerwony)
-        Diamonds, // Karo ♦ (Czerwony)
-        Clubs,    // Trefl ♣ (Czarny)
-        Spades    // Pik ♠ (Czarny)
-    }
+	// Enum reprezentujący figury kart (As, 2-10, Walet, Dama, Król)
+	public enum Rank {
+		Ace = 1, Two, Three, Four, Five, Six, Seven, Eight, Nine, Ten, Jack, Queen, King
+	}
 
-    // Enum reprezentujący figury kart (As, 2-10, Walet, Dama, Król)
-    public enum Rank {
-        Ace = 1, Two, Three, Four, Five, Six, Seven, Eight, Nine, Ten, Jack, Queen, King
-    }
+	// Klasa reprezentująca pojedynczą kartę
+	public class Card(Suit suit, Rank rank) {
+		public Suit Suit { get; } = suit;
+		public Rank Rank { get; } = rank;
+		public bool IsFaceUp { get; set; } = false; // Domyślnie karta jest zakryta
 
-    // Klasa reprezentująca pojedynczą kartę
-    public class Card {
-        public Suit Suit { get; } // Kolor karty (kier, karo, pik, trefl)
-        public Rank Rank { get; } // Figura karty (As-Król)
-        public bool IsFaceUp { get; set; } // Czy karta jest odkryta?
+		// Zwraca kolor karty (Czerwony/Czarny) na podstawie jej koloru (Suit)
+		public CardColor Color => (Suit == Suit.Hearts || Suit == Suit.Diamonds) ? CardColor.Red : CardColor.Black;
 
-        // Konstruktor karty
-        public Card(Suit suit, Rank rank) {
-            Suit = suit;
-            Rank = rank;
-            IsFaceUp = false; // Domyślnie karta jest zakryta
-        }
+		// Zwraca reprezentację tekstową karty (np. " A♥", "10♠", " K♦")
+		// lub "[ ]" jeśli zakryta
+		public override string ToString() {
+			if (!IsFaceUp) {
+				return "[*]"; // Reprezentacja zakrytej karty
+			}
 
-        // Zwraca kolor karty (Czerwony/Czarny) na podstawie jej koloru (Suit)
-        public CardColor Color => (Suit == Suit.Hearts || Suit == Suit.Diamonds) ? CardColor.Red : CardColor.Black;
+			char suitChar = (char)Suit;
+			string rankString = Rank switch {
+				Rank.Ace => "A",
+				Rank.Jack => "J",
+				Rank.Queen => "Q",
+				Rank.King => "K",
+				_ => ((int)Rank).ToString(),
+			};
 
-        // Zwraca reprezentację tekstową karty (np. " A♥", "10♠", " K♦")
-        // lub "[ ]" jeśli zakryta
-        public string GetDisplay() {
-            if (!IsFaceUp) {
-                return "[ ]"; // Reprezentacja zakrytej karty
-            }
+			// Dodajemy spację dla jednocyfrowych rang dla wyrównania
+			return $"{(rankString.Length == 1 ? " " : "")}{rankString}{suitChar}";
+		}
+	}
 
-            string rankString = Rank switch
-            {
-                Rank.Ace => "A",
-                Rank.Jack => "J",
-                Rank.Queen => "Q",
-                Rank.King => "K",
-                Rank.Ten => "T",
-                _ => ((int)Rank).ToString(),
-            };
-
-            char suitChar = Suit switch
-            {
-                Suit.Hearts => '♥',
-                Suit.Diamonds => '♦',
-                Suit.Clubs => '♣',
-                Suit.Spades => '♠',
-                _ => '?',
-            };
-
-            // Dodajemy spację dla jednocyfrowych rang dla wyrównania
-            return $"{(rankString.Length == 1 ? " " : "")}{rankString}{suitChar}";
-        }
-
-        // Nadpisanie metody ToString dla łatwiejszego debugowania
-        public override string ToString() {
-            return $"{Rank} of {Suit}";
-        }
-    }
-
-    // Klasa reprezentująca talię kart
-    public class Deck {
-        private List<Card> cards; // Lista kart w talii
-        private static readonly Random rng = new Random(); // Generator liczb losowych do tasowania
-
-        // Konstruktor tworzący pełną, potasowaną talię 52 kart
-        public Deck() {
-            cards = new List<Card>();
-            // Pętla po wszystkich kolorach (Suit)
-            foreach (Suit s in Enum.GetValues(typeof(Suit))) {
-                // Pętla po wszystkich figurach (Rank)
-                foreach (Rank r in Enum.GetValues(typeof(Rank))) {
-                    cards.Add(new Card(s, r)); // Dodanie nowej karty do listy
-                }
-            }
-            Shuffle(); // Potasowanie talii po utworzeniu
-        }
-
-        // Metoda tasująca karty w talii (algorytm Fisher-Yates)
-        public void Shuffle() {
-            int n = cards.Count;
-            while (n > 1) {
-                n--;
-                int k = rng.Next(n + 1); // Losowy indeks
-                Card value = cards[k]; // Zamiana miejscami kart
-                cards[k] = cards[n];
-                cards[n] = value;
-            }
-        }
-
-        // Metoda dobierająca jedną kartę z wierzchu talii
-        // Zwraca null, jeśli talia jest pusta
-        public Card? Deal() {
-            if (cards.Count == 0) {
-                return null; // Brak kart do dobrania
-            }
-            Card card = cards[cards.Count - 1]; // Pobranie ostatniej karty z listy
-            cards.RemoveAt(cards.Count - 1); // Usunięcie karty z listy
-            return card;
-        }
-
-        // Zwraca liczbę kart pozostałych w talii
-        public int Count => cards.Count;
-
-        // Metoda dodająca listę kart z powrotem do talii (np. z WastePile)
-        public void AddCards(IEnumerable<Card> cardsToAdd) {
-            foreach (var card in cardsToAdd) {
-                card.IsFaceUp = false; // Zakrywamy karty przed dodaniem do talii
-                cards.Add(card);
-            }
-        }
-    }
 }

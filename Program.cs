@@ -20,18 +20,18 @@ namespace SolitaireConsole {
 				Game game = new(difficulty.Value); // Rozpocznij nową grę
 
 				// Uruchom główną pętlę gry (teraz w klasie Game)
-				Game.GameResult result = game.RunGameLoop();
+				GameResult result = game.RunGameLoop();
 
 				// Obsłuż wynik gry
 				switch (result) {
-					case Game.GameResult.Restart:
+					case GameResult.Restart:
 						Console.WriteLine("\nRozpoczynanie nowej gry...");
 						Thread.Sleep(1000);
 						break;
-					case Game.GameResult.Quit:
+					case GameResult.Quit:
 						playAgain = false;
 						break;
-					case Game.GameResult.Continue:
+					case GameResult.Continue:
 					default:
 						break;
 				}
