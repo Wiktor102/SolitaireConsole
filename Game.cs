@@ -1,7 +1,6 @@
-using System.Text;
 using SolitaireConsole.CardPiles;
+using SolitaireConsole.InteractionModes;
 using SolitaireConsole.UI;
-using SolitaireConsole.Utils;
 
 namespace SolitaireConsole {
 	// Główna klasa zarządzająca logiką gry
@@ -10,27 +9,26 @@ namespace SolitaireConsole {
 		public WastePile Waste { get; private set; }
 		public List<FoundationPile> Foundations { get; private set; }
 		public List<TableauPile> Tableaux { get; private set; }
-		public DifficultyLevel Difficulty { get; private set; } // Zmieniono z IsHardMode (bool) na Difficulty (enum)	
+		public DifficultyLevel Difficulty { get; private set; }
 		public int MovesCount { get; private set; } // Licznik ruchów
 
 		private const int MaxUndoSteps = 3; // Maksymalna liczba cofnięć
-		private readonly Stack<MoveRecord> moveHistory; // Stos do przechowywania historii ruchów
+		private readonly Stack<MoveRecord> _moveHistory; // Stos do przechowywania historii ruchów
 
-		private readonly HighScoreManager highScoreManager; // Zarządzanie najlepszymi wynikami
+		private readonly HighScoreManager _highScoreManager; // Zarządzanie najlepszymi wynikami
 
-		private readonly DisplayStrategy displayStrategy;
+		private readonly InteractionMode _interactionMode;
 
-		// Updated constructor
 		public Game(DifficultyLevel difficulty) {
 			Difficulty = difficulty;
 			Stock = new StockPile();
 			Waste = new WastePile(difficulty);
 			Foundations = new List<FoundationPile>(4);
 			Tableaux = new List<TableauPile>(7);
-			moveHistory = new Stack<MoveRecord>();
+			_moveHistory = new Stack<MoveRecord>();
 			MovesCount = 0;
-			highScoreManager = new HighScoreManager("highscores.txt");
-			displayStrategy = new ConsoleDisplayStrategy(this);
+			_highScoreManager = new HighScoreManager("highscores.txt");
+			_interactionMode = new TextInteractionMode(this);
 
 			// Initialize empty Foundation and Tableau piles
 			for (int i = 0; i < 4; i++) Foundations.Add(new FoundationPile());
@@ -46,7 +44,7 @@ namespace SolitaireConsole {
 		// Metoda do obsługi dobierania kart ze stosu rezerwowego (Stock)
 		public bool DrawFromStock() {
 			// Sprawdź, czy można cofnąć ten ruch (jeśli historia jest pełna)
-			bool canUndo = moveHistory.Count < MaxUndoSteps;
+			bool canUndo = _moveHistory.Count < MaxUndoSteps;
 
 			// Jeśli Stock jest pusty, przenieś karty z Waste z powrotem do Stock
 			if (Stock.IsEmpty) {
@@ -61,8 +59,8 @@ namespace SolitaireConsole {
 				var wasteCardsBeforeReset = Waste.Cards;
 				// Używamy specjalnych indeksów/typów, aby zidentyfikować reset
 				var resetRecord = new MoveRecord(PileType.Waste, -1, PileType.Stock, -1, wasteCardsBeforeReset, false, false);
-				if (moveHistory.Count >= MaxUndoSteps) moveHistory.Pop(); // Usuń najstarszy ruch, jeśli stos jest pełny
-				moveHistory.Push(resetRecord);
+				if (_moveHistory.Count >= MaxUndoSteps) _moveHistory.Pop(); // Usuń najstarszy ruch, jeśli stos jest pełny
+				_moveHistory.Push(resetRecord);
 
 
 				Stock.Reset(Waste.Cards); // Przenieś karty z Waste
@@ -80,8 +78,8 @@ namespace SolitaireConsole {
 				// Traktujemy to jako ruch ze Stock do Waste
 				// Przechowujemy dobrane karty
 				var drawRecord = new MoveRecord(PileType.Stock, 0, PileType.Waste, 0, drawnCards, false, false);
-				if (moveHistory.Count >= MaxUndoSteps) moveHistory.Pop(); // Usuń najstarszy ruch
-				moveHistory.Push(drawRecord);
+				if (_moveHistory.Count >= MaxUndoSteps) _moveHistory.Pop(); // Usuń najstarszy ruch
+				_moveHistory.Push(drawRecord);
 
 				Waste.AddCards(drawnCards); // Dodaj dobrane karty do Waste
 				MovesCount++; // Dobranie liczy się jako ruch
@@ -197,8 +195,8 @@ namespace SolitaireConsole {
 			if (cardsToMove.Count > 0) {
 				// Zapisz ruch do historii PRZED wykonaniem
 				var moveRecord = new MoveRecord(sourceType, sourceIndex, destType, destIndex, new List<Card>(cardsToMove), wasSourceTopFlipped, wasDestFoundationSuitSet);
-				if (moveHistory.Count >= MaxUndoSteps) moveHistory.Pop(); // Usuń najstarszy ruch
-				moveHistory.Push(moveRecord);
+				if (_moveHistory.Count >= MaxUndoSteps) _moveHistory.Pop(); // Usuń najstarszy ruch
+				_moveHistory.Push(moveRecord);
 
 				// Dodaj przeniesione karty do stosu docelowego
 				destPile.AddCards(cardsToMove);
@@ -213,12 +211,12 @@ namespace SolitaireConsole {
 
 		// Metoda do cofania ostatniego ruchu
 		public bool UndoLastMove() {
-			if (moveHistory.Count == 0) {
+			if (_moveHistory.Count == 0) {
 				Console.WriteLine("Brak ruchów do cofnięcia.");
 				return false;
 			}
 
-			MoveRecord lastMove = moveHistory.Pop(); // Pobierz ostatni ruch ze stosu
+			MoveRecord lastMove = _moveHistory.Pop(); // Pobierz ostatni ruch ze stosu
 
 			// --- Logika cofania ruchu ---
 
@@ -274,7 +272,7 @@ namespace SolitaireConsole {
 					Console.WriteLine("Błąd krytyczny: Niezgodność kart podczas cofania ruchu!");
 					// Przywróć stan przed próbą cofnięcia?
 					destPile.AddCards(removedFromDest); // Przywróć usunięte karty
-					moveHistory.Push(lastMove); // Przywróć ruch do historii
+					_moveHistory.Push(lastMove); // Przywróć ruch do historii
 					return false;
 				}
 
@@ -346,7 +344,7 @@ namespace SolitaireConsole {
 
 		// Metoda do obsługi zakończenia gry (wygranej)
 		public void HandleWin() {
-			displayStrategy.Display(); // Wyświetl stan gry przed zakończeniem
+			_interactionMode.Display(); // Wyświetl stan gry przed zakończeniem
 			Console.WriteLine("\n*************************************");
 			Console.WriteLine("* Gratulacje! Wygrałeś w Pasjansa! *");
 			Console.WriteLine($"* Ukończyłeś grę w {MovesCount} ruchach.    *");
@@ -358,9 +356,9 @@ namespace SolitaireConsole {
 			if (initials.Length > 3) initials = initials.Substring(0, 3);
 			if (string.IsNullOrWhiteSpace(initials)) initials = "XYZ";
 
-			highScoreManager.AddScore(initials, MovesCount);
+			_highScoreManager.AddScore(initials, MovesCount);
 			Console.WriteLine("\nRanking najlepszych wyników:");
-			highScoreManager.DisplayScores();
+			_highScoreManager.DisplayScores();
 			Console.WriteLine("\nNaciśnij Enter, aby zakończyć...");
 			Console.ReadLine();
 		}
@@ -368,142 +366,35 @@ namespace SolitaireConsole {
 		// Metoda do wyświetlania rankingu
 		public void DisplayHighScores() {
 			Console.WriteLine("\n--- Ranking Najlepszych Wyników ---");
-			highScoreManager.DisplayScores();
+			_highScoreManager.DisplayScores();
 			Console.WriteLine("---------------------------------");
 		}
 
-		// Metoda głównej pętli gry (przeniesiona z Program.cs)
+		// Metoda głównej pętli gry
 		public GameResult RunGameLoop() {
 			while (true) {
-				displayStrategy.Display(); // Wyświetl stan gry
+				_interactionMode.Display(); // Wyświetl stan gry
 
 				// Sprawdź warunek zwycięstwa
 				if (CheckWinCondition()) {
 					HandleWin(); // Obsłuż wygraną
-					return GameResult.Continue; // Domyślnie kontynuujemy po wygranej
+					return GameResult.Continue; // Domyślnie kontynuujemy do menu głównego po wygranej
 				}
 
 				// Wyświetl dostępne akcje
-				Console.WriteLine("\nAkcje:");
-				Console.WriteLine(" - draw / d          : Dobierz kartę ze stosu [S]");
-				Console.WriteLine(" - move / m [źr] [cel]: Przenieś kartę/sekwencję (np. m W T2, m T1 F1, m T3 T5 [liczba])");
-				Console.WriteLine(" - undo / u          : Cofnij ostatni ruch (do 3 ruchów)");
-				Console.WriteLine(" - score / h         : Pokaż ranking");
-				Console.WriteLine(" - restart / r       : Rozpocznij nową grę");
-				Console.WriteLine(" - quit / q          : Zakończ grę");
-				Console.Write("Wybierz akcję: ");
+				_interactionMode.DisplayHints();
+				
 
-				string? input = Console.ReadLine()?.ToLower().Trim(); // Wczytaj i przetwórz komendę użytkownika
-
-				if (string.IsNullOrWhiteSpace(input)) continue; // Ignoruj puste linie
-
-				string[] parts = input.Split(' ', StringSplitOptions.RemoveEmptyEntries); // Podziel komendę na części
-				string command = parts[0];
-
-				try { // Obsługa potencjalnych błędów parsowania komend
-					switch (command) {
-						case "draw":
-						case "d":
-							if (!DrawFromStock()) {
-								Console.WriteLine("Nie można dobrać karty.");
-								Pause();
-							}
-							break;
-
-						case "move":
-						case "m":
-							if (parts.Length < 3) {
-								Console.WriteLine("Nieprawidłowa komenda 'move'. Użycie: move [źródło] [cel] [liczba_kart - opcjonalnie]");
-								Console.WriteLine("Źródła: S (Stock - nie można), W (Waste), F1-F4 (Foundation), T1-T7 (Tableau)");
-								Console.WriteLine("Cele: F1-F4, T1-T7");
-								Pause();
-								continue;
-							}
-							string sourceStr = parts[1].ToUpper();
-							string destStr = parts[2].ToUpper();
-							int cardCount = 1; // Domyślnie przenosimy 1 kartę
-
-							// Sprawdź, czy podano liczbę kart (dla ruchu T->T)
-							if (parts.Length > 3) {
-								if (!int.TryParse(parts[3], out cardCount) || cardCount < 1) {
-									Console.WriteLine("Nieprawidłowa liczba kart. Musi być dodatnią liczbą całkowitą.");
-									Pause();
-									continue;
-								}
-							}
-
-							// Parsowanie źródła
-							PileType sourceType;
-							int sourceIndex = ParsePileString(sourceStr, out sourceType);
-							if (sourceIndex == -1 || sourceType == PileType.Stock) // Nie można ruszać ze Stock bezpośrednio
-							{
-								Console.WriteLine($"Nieprawidłowe źródło: {sourceStr}"); Pause(); continue;
-							}
-
-							// Parsowanie celu
-							PileType destType;
-							int destIndex = ParsePileString(destStr, out destType);
-							if (destIndex == -1 || destType == PileType.Stock || destType == PileType.Waste) // Nie można ruszać na Stock ani Waste
-							{
-								Console.WriteLine($"Nieprawidłowy cel: {destStr}"); Pause(); continue;
-							}
-
-							// Wykonaj ruch
-							if (!TryMove(sourceType, sourceIndex, destType, destIndex, cardCount)) {
-								// Komunikat o błędzie jest już wyświetlany w TryMove
-								Pause();
-							}
-							break;
-
-						case "undo":
-						case "u":
-							if (!UndoLastMove()) {
-								// Komunikat o błędzie jest już wyświetlany w UndoLastMove
-								Pause();
-							}
-							break;
-
-						case "score":
-						case "h":
-							Console.Clear();
-							DisplayHighScores();
-							Console.WriteLine("\nNaciśnij Enter, aby wrócić do gry...");
-							Console.ReadLine();
-							break;
-
-						case "restart":
-						case "r":
-							Console.Write("Czy na pewno chcesz rozpocząć nową grę? (t/n): ");
-							if (Console.ReadLine()?.ToLower() == "t") {
-								return GameResult.Restart; // Sygnalizuj chęć rozpoczęcia nowej gry
-							}
-							break;
-
-						case "quit":
-						case "q":
-							Console.Write("Czy na pewno chcesz zakończyć grę? (t/n): ");
-							if (Console.ReadLine()?.ToLower() == "t") {
-								return GameResult.Quit; // Sygnalizuj chęć zakończenia gry
-							}
-							break;
-
-						default:
-							Console.WriteLine("Nieznana komenda.");
-							Pause();
-							break;
-					}
-				} catch (Exception ex) {
-					Console.WriteLine($"\nWystąpił nieoczekiwany błąd: {ex.Message}");
-					Console.WriteLine("Spróbuj ponownie lub uruchom grę od nowa.");
-					Pause();
-				}
+				GameResult? result = null; // Domyślny wynik
+				_interactionMode.HandleInput((r) => result = r); // Obsłuż wejście użytkownika
+				if (result != null) return (GameResult)result;
 			}
 		}
 
 		// Pomocnicza metoda do parsowania stringa reprezentującego stos (np. "T1", "F3", "W")
 		// Zwraca indeks stosu (0-based) i ustawia typ stosu przez parametr 'out'
 		// Zwraca -1 w przypadku błędu.
-		private static int ParsePileString(string pileStr, out PileType type) {
+		public int ParsePileString(string pileStr, out PileType type) {
 			type = PileType.Stock; // Domyślna wartość na wypadek błędu
 
 			if (string.IsNullOrEmpty(pileStr)) return -1;
@@ -534,7 +425,7 @@ namespace SolitaireConsole {
 		}
 
 		// Prosta metoda pauzująca grę do czasu naciśnięcia Enter
-		private static void Pause() {
+		public void Pause() {
 			Console.WriteLine("\nNaciśnij Enter, aby kontynuować...");
 			Console.ReadLine();
 		}
