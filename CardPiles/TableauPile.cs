@@ -2,11 +2,8 @@ using SolitaireConsole.UI;
 
 namespace SolitaireConsole.CardPiles {
 	// Kolumna gry (Tableau) - 7 kolumn na planszy
-	public class TableauPile : CardPile {
+	public class TableauPile() : CardPile() {
 		public override PileType Type { get => PileType.Tableau; }
-
-		// Konstruktor
-		public TableauPile() : base() { }
 
 		// Metoda do inicjalnego rozdania kart do kolumny
 		public void DealInitialCards(List<Card> initialCards) {

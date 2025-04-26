@@ -39,24 +39,6 @@ namespace SolitaireConsole.CardPiles {
 			if (IsEmpty) PileSuit = null; // Teoretycznie moglibyśmy wyrzucić wyjątek jeśli warunek nie jest spełniony
 		}
 
-		//public void Display() {
-		//	Card? topCard = PeekTopCard();
-		//	if (topCard != null) {
-		//		topCard.Display();
-		//		return;
-		//	}
-
-		//	if (!PileSuit.HasValue) {
-		//		Console.Write("[   ]"); // Pusty stos
-		//		return;
-		//	}
-
-		//	// Wyświetl symbol koloru
-		//	char suitChar = PileSuit == null ? '?' : (char)PileSuit;
-		//	Console.ForegroundColor = PileSuit?.GetColor() ?? ConsoleColor.White;
-		//	Console.Write($"[ {PileSuit} ]");
-		//	Console.ResetColor();
-		//}
 		public override PileDisplayInfo GetDisplayInfo() {
 			Card? topCard = PeekTopCard();
 			List<CardSpot> cardsToDisplay = [];
@@ -64,7 +46,9 @@ namespace SolitaireConsole.CardPiles {
 			if (topCard != null) {
 				cardsToDisplay.Add(new CardSpot(topCard));
 			} else if (PileSuit != null) {
-				cardsToDisplay.Add(new CardSpot((Suit) PileSuit));
+				cardsToDisplay.Add(new CardSpot((Suit)PileSuit));
+			} else {
+				cardsToDisplay.Add(new CardSpot());
 			}
 
 			return new PileDisplayInfo {

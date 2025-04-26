@@ -51,11 +51,11 @@ namespace SolitaireConsole.UI {
 			// --- Rysowanie górnej części: Stock, Waste, Foundations ---
 			Console.WriteLine("--- Pasjans ---");
 			Console.Write($"Stos [S]: ");
-			DisplayPile(game.Stock.GetDisplayInfo());
+			DisplayPiles([game.Stock]);
 			Console.Write("   ");
 
 			Console.Write("Odrzucone [W]: ");
-			DisplayPile(game.Waste.GetDisplayInfo());
+			DisplayPiles([game.Waste]);
 			Console.Write("   ");
 
 			Console.Write("Stosy Końcowe [F1-F4]: ");
@@ -67,78 +67,55 @@ namespace SolitaireConsole.UI {
 			// --- Rysowanie kolumn Tableau [T1-T7] ---
 			Console.WriteLine("Kolumny Gry [T1-T7]:");
 			DisplayPiles([.. game.Tableaux.Cast<CardPile>()]);
-			Console.WriteLine(new string('-', Console.WindowWidth > 0 ? Console.WindowWidth - 1 : 80)); // Linia oddzielająca
+			Console.WriteLine("\n" + new string('-', Console.WindowWidth > 0 ? Console.WindowWidth - 1 : 80)); // Linia oddzielająca
 		}
 
 		private static void DisplayPiles(List<CardPile> piles) {
 			List<List<CardSpot>> matrix = [];
-			int i = 0;
 			foreach (var pile in piles) {
 				var info = pile.GetDisplayInfo();
 				if (info.DisplayDirection == DisplayDirection.Horizontal) {
-					DisplayHorizontalPile(info.CardsToDisplay, info.ShowAmount);
+					// For each card, create a single-item column
+					foreach (var cardSpot in info.CardsToDisplay) matrix.Add([cardSpot]);
 				} else {
 					matrix.Add(info.CardsToDisplay);
 				}
-
-				i++;
 			}
 
-			if (matrix.Count > 0) DisplayVerticalPiles(matrix);
+			if (matrix.Count > 0) DisplayMatrixOfPiles(matrix);
 		}
 
-		private static void DisplayPile(PileDisplayInfo info) {
-			if (info.DisplayDirection == DisplayDirection.Horizontal) {
-				DisplayHorizontalPile(info.CardsToDisplay, info.ShowAmount);
-			} else {
-				throw new NotImplementedException();
-			}
-		}
-
-		private static void DisplayHorizontalPile(List<CardSpot> cardSpots, int? ShowAmount) {
-			if (cardSpots.Count == 0) {
-				Console.Write("[ ]");
-				if (ShowAmount != null) Console.Write($" ({ShowAmount})");
-				return;
-			}
-
-			int i = 0;
-			foreach (var cardSpot in cardSpots) {
-				if (cardSpot.Card != null) {
-					DisplayCard(cardSpot.Card);
-				} else if (cardSpot.Suit != null) {
-					Console.Write("[");
-					Console.ForegroundColor = ((Suit)cardSpot.Suit).GetColor();
-					Console.Write(cardSpot.Suit);
-					Console.ResetColor();
-					Console.Write("]");
-				} else {
-					Console.Write("[ ]");
-				}
-
-				if (ShowAmount != null) Console.Write($" ({ShowAmount})");
-				if (i < cardSpots.Count - 1) Console.Write(" "); // Odstęp między kartami
-				i++;
-			}
-		}
-
-		public static void DisplayVerticalPiles(List<List<CardSpot>> matrix) {
+		public static void DisplayMatrixOfPiles(List<List<CardSpot>> matrix) {
 			int maxRows = 0;
 			foreach (var list in matrix) maxRows = Math.Max(maxRows, list.Count);
 
 			for (int row = 0; row < maxRows; row++) {
 				foreach (var pile in matrix) {
-					if (row < pile.Count) {
-						var cardSpot = pile[row];
-						if (cardSpot.Card != null) DisplayCard(cardSpot.Card);
-					} else {
-						Console.Write("   ");
+					if (row >= pile.Count) {
+						Console.Write("    ");
+						continue;
 					}
 
+					var cardSpot = pile[row];
+					if (cardSpot.Card != null) {
+						DisplayCard(cardSpot.Card);
+					} else if (cardSpot.Suit != null) {
+						Console.Write("[");
+						Console.ForegroundColor = ((Suit)cardSpot.Suit).GetColor();
+						Console.Write(cardSpot.Suit);
+						Console.ResetColor();
+						Console.Write("]");
+					} else {
+						Console.Write("[ ]");
+					}
+
+					// TODO: somehow pass info to here
+					//if (ShowAmount != null) Console.Write($" ({ShowAmount})");
 					Console.Write(" ");
 				}
 
-				Console.WriteLine();
+
+				if (row < maxRows - 1) Console.WriteLine();
 			}
 		}
 
