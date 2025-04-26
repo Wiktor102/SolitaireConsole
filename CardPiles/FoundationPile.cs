@@ -5,6 +5,7 @@ namespace SolitaireConsole.CardPiles {
 	// Stos końcowy (Foundation) - gdzie układamy karty od Asa do Króla
 	public class FoundationPile : CardPile {
 		public Suit? PileSuit { get; private set; } // Kolor (Suit) tego stosu
+		public override PileType Type { get => PileType.Foundation; }
 
 		// Sprawdza, czy można dodać kartę na ten stos
 		public override bool CanAddCard(Card card) {

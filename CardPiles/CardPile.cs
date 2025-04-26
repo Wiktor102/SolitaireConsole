@@ -4,14 +4,11 @@ namespace SolitaireConsole.CardPiles {
     // Enum określający typ stosu (do identyfikacji w ruchach)
     public enum PileType { Stock, Waste, Foundation, Tableau }
 
-    public interface IDrawableCardPile {
-		void Display(); // Interfejs do wyświetlania stosu
-	}
-
 	// Klasa bazowa dla różnych stosów kart (abstrakcyjna)
 	public abstract class CardPile {
         protected List<Card> cards = []; // Lista kart na stosie
         public List<Card> Cards => [..cards]; // Publiczna właściwość do dostępu do kart
+        public abstract PileType Type { get; } // Typ stosu (Stock, Waste, Foundation, Tableau)
 
 		// Zwraca liczbę kart na stosie
 		public int Count => cards.Count;
@@ -19,8 +16,8 @@ namespace SolitaireConsole.CardPiles {
         // Sprawdza, czy stos jest pusty
         public bool IsEmpty => cards.Count == 0;
 
-        // Dodaje kartę na wierzch stosu
-        public virtual void AddCard(Card card) {
+		// Dodaje kartę na wierzch stosu
+		public virtual void AddCard(Card card) {
             cards.Add(card);
         }
 

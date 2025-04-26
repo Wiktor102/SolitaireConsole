@@ -1,11 +1,13 @@
-﻿using SolitaireConsole.UI;
+using SolitaireConsole.UI;
 
 namespace SolitaireConsole.CardPiles {
+
 	/// <summary>
 	/// Stos kart odrzuconych (Waste) - gdzie trafiają karty ze Stock
 	/// </summary>
 	public class WastePile(DifficultyLevel difficulty) : CardPile {
-		private readonly int _numberOfCardsToDisplay = difficulty == DifficultyLevel.Easy? 1 : 3; // Liczba kart do wyświetlenia w Waste zależna od poziomu trudności
+		private readonly int _numberOfCardsToDisplay = difficulty == DifficultyLevel.Easy ? 1 : 3; // Liczba kart do wyświetlenia w Waste zależna od poziomu trudności
+		public override PileType Type { get => PileType.Waste; }
 
 		/// <summary>
 		/// Metoda do dodawania kart dobranych ze Stock

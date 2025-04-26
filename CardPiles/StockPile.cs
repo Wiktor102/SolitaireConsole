@@ -1,9 +1,10 @@
-﻿using SolitaireConsole.UI;
+using SolitaireConsole.UI;
 
 namespace SolitaireConsole.CardPiles {
 	// Stos rezerwowy (Stock) - skąd dobieramy karty
 	public class StockPile : CardPile {
 		private readonly Deck deck; // Talia używana do gry
+		public override PileType Type { get => PileType.Stock; }
 
 		// Konstruktor inicjalizujący stos rezerwowy z nowej talii
 		public StockPile() {
