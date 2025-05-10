@@ -14,7 +14,7 @@ namespace SolitaireConsole.InteractionModes {
 		}
 	}
 
-	public struct ArrowInteractionContext() {
+	public class ArrowInteractionContext() {
 		public PileType selectedArea = PileType.Tableau;
 		public int? selectedTableauIndex = 0; // Index kolumny głównego obszaru gry (Tableau)
 		public int selectedCardIndex = 0; // Index karty w wybranym stosie (poziomo, ale pionowo dla Tableau - to nie ma większego znaczenia)

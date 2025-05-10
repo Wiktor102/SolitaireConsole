@@ -7,20 +7,20 @@
       "RelativeMoniker": "D:0:0:{818A6AC4-7DC7-47CC-987B-D86AD5F13DA5}|SolitaireConsole.csproj|solutionrelative:ui\\displaystrategy.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{818A6AC4-7DC7-47CC-987B-D86AD5F13DA5}|SolitaireConsole.csproj|f:\\2025\\solitaireconsole\\cardpiles\\foundationpile.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{818A6AC4-7DC7-47CC-987B-D86AD5F13DA5}|SolitaireConsole.csproj|solutionrelative:cardpiles\\foundationpile.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{818A6AC4-7DC7-47CC-987B-D86AD5F13DA5}|SolitaireConsole.csproj|f:\\2025\\solitaireconsole\\cardpiles\\tableaupile.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{818A6AC4-7DC7-47CC-987B-D86AD5F13DA5}|SolitaireConsole.csproj|solutionrelative:cardpiles\\tableaupile.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{818A6AC4-7DC7-47CC-987B-D86AD5F13DA5}|SolitaireConsole.csproj|f:\\2025\\solitaireconsole\\cardpiles\\cardpile.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{818A6AC4-7DC7-47CC-987B-D86AD5F13DA5}|SolitaireConsole.csproj|solutionrelative:cardpiles\\cardpile.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{818A6AC4-7DC7-47CC-987B-D86AD5F13DA5}|SolitaireConsole.csproj|f:\\2025\\solitaireconsole\\input\\arrowinputstrategy.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{818A6AC4-7DC7-47CC-987B-D86AD5F13DA5}|SolitaireConsole.csproj|solutionrelative:input\\arrowinputstrategy.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{818A6AC4-7DC7-47CC-987B-D86AD5F13DA5}|SolitaireConsole.csproj|f:\\2025\\solitaireconsole\\interactionmodes\\arrowinteractionmode.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{818A6AC4-7DC7-47CC-987B-D86AD5F13DA5}|SolitaireConsole.csproj|solutionrelative:interactionmodes\\arrowinteractionmode.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{818A6AC4-7DC7-47CC-987B-D86AD5F13DA5}|SolitaireConsole.csproj|f:\\2025\\solitaireconsole\\input\\textinputstrategy.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{818A6AC4-7DC7-47CC-987B-D86AD5F13DA5}|SolitaireConsole.csproj|solutionrelative:input\\textinputstrategy.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{818A6AC4-7DC7-47CC-987B-D86AD5F13DA5}|SolitaireConsole.csproj|f:\\2025\\solitaireconsole\\game.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{818A6AC4-7DC7-47CC-987B-D86AD5F13DA5}|SolitaireConsole.csproj|solutionrelative:game.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     }
   ],
   "DocumentGroupContainers": [
@@ -30,7 +30,7 @@
       "DocumentGroups": [
         {
           "DockedWidth": 208,
-          "SelectedChildIndex": 3,
+          "SelectedChildIndex": 5,
           "Children": [
             {
               "$type": "Bookmark",
@@ -45,6 +45,23 @@
               "Name": "ST:0:0:{aa2115a1-9712-457b-9047-dbb71ca2cdd2}"
             },
             {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{1c4feeaa-4718-4aa9-859d-94ce25d182ba}"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "TextInputStrategy.cs",
+              "DocumentMoniker": "F:\\2025\\SolitaireConsole\\Input\\TextInputStrategy.cs",
+              "RelativeDocumentMoniker": "Input\\TextInputStrategy.cs",
+              "ToolTip": "F:\\2025\\SolitaireConsole\\Input\\TextInputStrategy.cs",
+              "RelativeToolTip": "Input\\TextInputStrategy.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-05-10T09:12:26.305Z",
+              "EditorCaption": ""
+            },
+            {
               "$type": "Document",
               "DocumentIndex": 0,
               "Title": "DisplayStrategy.cs",
@@ -52,61 +69,48 @@
               "RelativeDocumentMoniker": "UI\\DisplayStrategy.cs",
               "ToolTip": "F:\\2025\\SolitaireConsole\\UI\\DisplayStrategy.cs",
               "RelativeToolTip": "UI\\DisplayStrategy.cs",
-              "ViewState": "AgIAAD4AAAAAAAAAAAAEwGMAAABCAAAAAAAAAA==",
+              "ViewState": "AgIAACAAAAAAAAAAAAAcwDEAAABSAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-04-26T11:55:17.655Z",
+              "WhenOpened": "2025-05-10T08:33:14.34Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
               "DocumentIndex": 1,
-              "Title": "FoundationPile.cs",
-              "DocumentMoniker": "F:\\2025\\SolitaireConsole\\CardPiles\\FoundationPile.cs",
-              "RelativeDocumentMoniker": "CardPiles\\FoundationPile.cs",
-              "ToolTip": "F:\\2025\\SolitaireConsole\\CardPiles\\FoundationPile.cs",
-              "RelativeToolTip": "CardPiles\\FoundationPile.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAADIAAAAEAAAAAAAAAA==",
+              "Title": "CardPile.cs",
+              "DocumentMoniker": "F:\\2025\\SolitaireConsole\\CardPiles\\CardPile.cs",
+              "RelativeDocumentMoniker": "CardPiles\\CardPile.cs",
+              "ToolTip": "F:\\2025\\SolitaireConsole\\CardPiles\\CardPile.cs",
+              "RelativeToolTip": "CardPiles\\CardPile.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAoAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-04-26T11:43:06.514Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 2,
-              "Title": "TableauPile.cs",
-              "DocumentMoniker": "F:\\2025\\SolitaireConsole\\CardPiles\\TableauPile.cs",
-              "RelativeDocumentMoniker": "CardPiles\\TableauPile.cs",
-              "ToolTip": "F:\\2025\\SolitaireConsole\\CardPiles\\TableauPile.cs",
-              "RelativeToolTip": "CardPiles\\TableauPile.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAQAAAAmAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-04-26T11:09:01.125Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 3,
-              "Title": "ArrowInputStrategy.cs",
-              "DocumentMoniker": "F:\\2025\\SolitaireConsole\\Input\\ArrowInputStrategy.cs",
-              "RelativeDocumentMoniker": "Input\\ArrowInputStrategy.cs",
-              "ToolTip": "F:\\2025\\SolitaireConsole\\Input\\ArrowInputStrategy.cs",
-              "RelativeToolTip": "Input\\ArrowInputStrategy.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAABkAAAADAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-04-26T11:06:09.15Z",
+              "WhenOpened": "2025-05-10T08:30:33.206Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
               "DocumentIndex": 4,
-              "Title": "ArrowInteractionMode.cs",
-              "DocumentMoniker": "F:\\2025\\SolitaireConsole\\InteractionModes\\ArrowInteractionMode.cs",
-              "RelativeDocumentMoniker": "InteractionModes\\ArrowInteractionMode.cs",
-              "ToolTip": "F:\\2025\\SolitaireConsole\\InteractionModes\\ArrowInteractionMode.cs",
-              "RelativeToolTip": "InteractionModes\\ArrowInteractionMode.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAA4AAAACAAAAAAAAAA==",
+              "Title": "Game.cs",
+              "DocumentMoniker": "F:\\2025\\SolitaireConsole\\Game.cs",
+              "RelativeDocumentMoniker": "Game.cs",
+              "ToolTip": "F:\\2025\\SolitaireConsole\\Game.cs",
+              "RelativeToolTip": "Game.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABwAAAASAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-04-26T11:00:49.544Z",
+              "WhenOpened": "2025-04-26T15:04:57.406Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "ArrowInputStrategy.cs",
+              "DocumentMoniker": "F:\\2025\\SolitaireConsole\\Input\\ArrowInputStrategy.cs",
+              "RelativeDocumentMoniker": "Input\\ArrowInputStrategy.cs",
+              "ToolTip": "F:\\2025\\SolitaireConsole\\Input\\ArrowInputStrategy.cs",
+              "RelativeToolTip": "Input\\ArrowInputStrategy.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAB0AAAAHAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-04-26T11:06:09.15Z",
               "EditorCaption": ""
             }
           ]

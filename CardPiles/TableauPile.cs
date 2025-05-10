@@ -91,6 +91,7 @@ namespace SolitaireConsole.CardPiles {
 			return new PileDisplayInfo {
 				CardsToDisplay = [.. cards.Select(c => new CardSpot(c))],
 				DisplayDirection = DisplayDirection.Vertical,
+				PileType = Type,
 				ShowAmount = null
 			};
 		}

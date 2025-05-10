@@ -54,6 +54,7 @@ namespace SolitaireConsole.CardPiles {
 			return new PileDisplayInfo {
 				CardsToDisplay = cardsToDisplay,
 				DisplayDirection = DisplayDirection.Horizontal,
+				PileType = Type,
 				ShowAmount = null
 			};
 		}

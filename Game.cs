@@ -28,7 +28,7 @@ namespace SolitaireConsole {
 			_moveHistory = new Stack<MoveRecord>();
 			MovesCount = 0;
 			_highScoreManager = new HighScoreManager("highscores.txt");
-			_interactionMode = new TextInteractionMode(this);
+			_interactionMode = new ArrowInteractionMode(this);
 
 			// Initialize empty Foundation and Tableau piles
 			for (int i = 0; i < 4; i++) Foundations.Add(new FoundationPile());
