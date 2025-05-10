@@ -1,6 +1,7 @@
 using SolitaireConsole.CardPiles;
 using SolitaireConsole.InteractionModes;
 using SolitaireConsole.UI;
+using SolitaireConsole.Utils;
 
 namespace SolitaireConsole {
 	// Główna klasa zarządzająca logiką gry
@@ -28,10 +29,10 @@ namespace SolitaireConsole {
 			_moveHistory = new Stack<MoveRecord>();
 			MovesCount = 0;
 			_highScoreManager = new HighScoreManager("highscores.txt");
-			_interactionMode = new ArrowInteractionMode(this);
+			_interactionMode = new TextInteractionMode(this);
 
 			// Initialize empty Foundation and Tableau piles
-			for (int i = 0; i < 4; i++) Foundations.Add(new FoundationPile());
+			foreach (Suit suit in Enum.GetValues<Suit>()) Foundations.Add(new FoundationPile(suit));
 			for (int i = 0; i < 7; i++) Tableaux.Add(new TableauPile());
 
 			// Deal cards to Tableau piles
@@ -98,7 +99,7 @@ namespace SolitaireConsole {
 				return false;
 			}
 
-			List<Card> cardsToMove = new List<Card>();
+			List<Card> cardsToMove = [];
 			bool wasSourceTopFlipped = false;
 			bool wasDestFoundationSuitSet = false;
 
@@ -175,13 +176,6 @@ namespace SolitaireConsole {
 				TableauPile destTableau = (TableauPile)destPile;
 				if (destTableau.CanAddCard(card)) {
 					cardsToMove.Add(sourceFoundation.RemoveTopCard()!); // Usuwamy kartę z Foundation
-																		// Sprawdź, czy stos Foundation stał się pusty i trzeba zresetować jego Suit
-					if (sourceFoundation.IsEmpty) {
-						sourceFoundation.ResetSuitIfEmpty();
-						// Uwaga: Cofnięcie tego ruchu musi przywrócić Suit!
-						// Potrzebujemy informacji w MoveRecord, że Suit został zresetowany.
-						// Na razie uproszczenie: cofnięcie ruchu przywróci kartę i Suit się ustawi.
-					}
 				} else {
 					Console.WriteLine("Błąd: Nie można przenieść tej karty na wybraną kolumnę.");
 					return false;
@@ -194,7 +188,7 @@ namespace SolitaireConsole {
 			// --- Finalizacja ruchu ---
 			if (cardsToMove.Count > 0) {
 				// Zapisz ruch do historii PRZED wykonaniem
-				var moveRecord = new MoveRecord(sourceType, sourceIndex, destType, destIndex, new List<Card>(cardsToMove), wasSourceTopFlipped, wasDestFoundationSuitSet);
+				var moveRecord = new MoveRecord(sourceType, sourceIndex, destType, destIndex, [.. cardsToMove], wasSourceTopFlipped, wasDestFoundationSuitSet);
 				if (_moveHistory.Count >= MaxUndoSteps) _moveHistory.Pop(); // Usuń najstarszy ruch
 				_moveHistory.Push(moveRecord);
 
@@ -274,11 +268,6 @@ namespace SolitaireConsole {
 					destPile.AddCards(removedFromDest); // Przywróć usunięte karty
 					_moveHistory.Push(lastMove); // Przywróć ruch do historii
 					return false;
-				}
-
-				// Jeśli cofamy ruch Asa na pusty Foundation, zresetuj Suit tego Foundation
-				if (lastMove.DestPileType == PileType.Foundation && lastMove.WasDestFoundationSuitSet) {
-					((FoundationPile)destPile).ResetSuitIfEmpty();
 				}
 
 

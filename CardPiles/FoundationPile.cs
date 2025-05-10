@@ -3,22 +3,26 @@ using SolitaireConsole.Utils;
 
 namespace SolitaireConsole.CardPiles {
 	// Stos końcowy (Foundation) - gdzie układamy karty od Asa do Króla
-	public class FoundationPile : CardPile {
+	public class FoundationPile() : CardPile {
 		public Suit? PileSuit { get; private set; } // Kolor (Suit) tego stosu
+		private readonly bool _persistantSuit = false;
 		public override PileType Type { get => PileType.Foundation; }
+
+		public FoundationPile(Suit pileSuit) : this() {
+			PileSuit = pileSuit;
+			_persistantSuit = true;
+		}
 
 		// Sprawdza, czy można dodać kartę na ten stos
 		public override bool CanAddCard(Card card) {
 			// Jeśli stos jest pusty, można dodać tylko Asa
 			if (IsEmpty) {
+				if (_persistantSuit && card.Suit != PileSuit) return false;
 				return card.Rank == Rank.Ace;
 			} else {
-				Card? topCard = PeekTopCard(); // Jeśli stos nie jest pusty, sprawdzamy wierzchnią kartę
-				if (topCard == null) return false; // Nie powinno się zdarzyć, ale dla bezpieczeństwa
-
-				// Karta musi być tego samego koloru (Suit)
-				// i o jeden stopień wyższa (Rank) niż wierzchnia karta
-				return card.Suit == topCard.Suit && card.Rank == topCard.Rank + 1;
+				Card topCard = PeekTopCard()!; // Jeśli stos nie jest pusty, sprawdzamy wierzchnią kartę
+				// Karta musi być tego samego koloru (Suit) i o jeden stopień wyższa (Rank) niż wierzchnia karta
+				return card.Suit == PileSuit && card.Rank == topCard.Rank + 1;
 			}
 		}
 
@@ -34,9 +38,12 @@ namespace SolitaireConsole.CardPiles {
 			}
 		}
 
-		// Metoda do resetowania koloru stosu (np. przy cofaniu ruchu Asa)
-		public void ResetSuitIfEmpty() {
-			if (IsEmpty) PileSuit = null; // Teoretycznie moglibyśmy wyrzucić wyjątek jeśli warunek nie jest spełniony
+		public override Card? RemoveTopCard() {
+			if (cards.Count == 1 && !_persistantSuit) {
+				PileSuit = null;
+			}
+
+			return base.RemoveTopCard();
 		}
 
 		public override PileDisplayInfo GetDisplayInfo() {

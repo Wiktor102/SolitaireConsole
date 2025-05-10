@@ -134,7 +134,7 @@ namespace SolitaireConsole.UI {
 						Console.Write("[");
 						var fg = Console.ForegroundColor;
 						Console.ForegroundColor = cardSpot.Suit.Value.GetColor();
-						Console.Write(cardSpot.Suit);
+						Console.Write((char)cardSpot.Suit);
 						Console.ForegroundColor = fg;
 						Console.Write("]");
 					} else {
