@@ -65,5 +65,16 @@ namespace SolitaireConsole.CardPiles {
 				ShowAmount = null
 			};
 		}
+
+		public static FoundationPile GetPileForSuit(List<FoundationPile> piles, Suit suit, out int index) {
+			index = 0;
+
+			foreach (FoundationPile pile in piles) {
+				if (pile.PileSuit == suit) return pile;
+				index++;
+			}
+
+			return piles[0];
+		}
 	}
 }

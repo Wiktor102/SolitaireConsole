@@ -29,7 +29,7 @@ namespace SolitaireConsole {
 			_moveHistory = new Stack<MoveRecord>();
 			MovesCount = 0;
 			_highScoreManager = new HighScoreManager("highscores.txt");
-			_interactionMode = new TextInteractionMode(this);
+			_interactionMode = new ArrowInteractionMode(this);
 
 			// Initialize empty Foundation and Tableau piles
 			foreach (Suit suit in Enum.GetValues<Suit>()) Foundations.Add(new FoundationPile(suit));
@@ -377,39 +377,6 @@ namespace SolitaireConsole {
 				GameResult? result = null; // Domyślny wynik
 				_interactionMode.HandleInput((r) => result = r); // Obsłuż wejście użytkownika
 				if (result != null) return (GameResult)result;
-			}
-		}
-
-		// Pomocnicza metoda do parsowania stringa reprezentującego stos (np. "T1", "F3", "W")
-		// Zwraca indeks stosu (0-based) i ustawia typ stosu przez parametr 'out'
-		// Zwraca -1 w przypadku błędu.
-		public int ParsePileString(string pileStr, out PileType type) {
-			type = PileType.Stock; // Domyślna wartość na wypadek błędu
-
-			if (string.IsNullOrEmpty(pileStr)) return -1;
-
-			char pileChar = pileStr[0];
-			string indexStr = pileStr.Length > 1 ? pileStr.Substring(1) : "";
-			int index = 0; // Domyślny indeks dla W
-
-			switch (pileChar) {
-				case 'W': // Waste Pile
-					if (pileStr.Length > 1) return -1; // Waste nie ma indeksu (W, nie W1)
-					type = PileType.Waste;
-					return 0; // Zwracamy 0 jako placeholder, bo Waste jest tylko jedno
-
-				case 'F': // Foundation Pile
-					if (!int.TryParse(indexStr, out index) || index < 1 || index > 4) return -1; // Indeksy F1-F4
-					type = PileType.Foundation;
-					return index - 1; // Zwracamy indeks 0-based (0-3)
-
-				case 'T': // Tableau Pile
-					if (!int.TryParse(indexStr, out index) || index < 1 || index > 7) return -1; // Indeksy T1-T7
-					type = PileType.Tableau;
-					return index - 1; // Zwracamy indeks 0-based (0-6)
-
-				default:
-					return -1; // Nieznany typ stosu
 			}
 		}
 

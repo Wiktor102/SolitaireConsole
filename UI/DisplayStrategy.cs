@@ -16,7 +16,7 @@ namespace SolitaireConsole.UI {
 		public Card? Card;
 		public Suit? Suit;
 
-		public CardSpot() {}
+		public CardSpot() { }
 
 		public CardSpot(Suit suit) {
 			Card = null;
@@ -47,13 +47,33 @@ namespace SolitaireConsole.UI {
 		public abstract void DisplayTextInteractionModeHints();
 		public abstract void DisplayArrowInteractionModeHints();
 
-		protected bool IsMatrixCellSelected(PileDisplayInfo info, int row, int column) {
-			if (_context == null) return false;
+		protected ConsoleColor GetMatrixCellBg(PileDisplayInfo info, int row, int column) {
+			const ConsoleColor normalColor = ConsoleColor.Black;
+			const ConsoleColor selectedColor = ConsoleColor.Gray;
+			const ConsoleColor sourceColor = ConsoleColor.Yellow;
+			const ConsoleColor destinationColor = ConsoleColor.Green;
+
+			if (_context == null) return normalColor;
 			PileType type = info.PileType;
 
-			if (type != _context.selectedArea) return false;
-			if (type == PileType.Tableau) return _context.selectedTableauIndex == column && _context.selectedCardIndex == row; // Tableau jest zawsze pionowy (w przyszłości można zaimplementować żeby mógłbyć poziomo)
-			return _context.selectedCardIndex == (info.DisplayDirection == DisplayDirection.Vertical ? row : column);
+			if (type == PileType.Tableau) {
+				if (_context.SelectingDestiantionOnTableau) {
+					// Źródło jest już wybrane -> podświetlmy je na inny kolor
+					//                         -> wybieramy talię docelową i też podświetlmy ją na inny kolor (to może być konieczne nawet jeśli źródłem jest inny rodzaj stosu)
+					// Do tego źródło może mieć większy zakres niż 1 karta
+					if (type == _context.SelectedArea && _context.SelectedTableauIndex == column && _context.SelectedCardIndex <= row) return sourceColor;
+					if (_context.SelectedDestTableauIndex == column) return destinationColor;
+					return normalColor;
+				}
+
+				if (type != _context.SelectedArea) return normalColor;
+
+				// Tableau jest zawsze pionowy (w przyszłości można zaimplementować żeby mógłbyć poziomo)
+				return _context.SelectedTableauIndex == column && _context.SelectedCardIndex == row ? selectedColor : normalColor;
+			}
+
+			if (type != _context.SelectedArea) return normalColor;
+			return _context.SelectedCardIndex == (info.DisplayDirection == DisplayDirection.Vertical ? row : column) ? selectedColor : normalColor;
 		}
 	}
 
@@ -84,6 +104,7 @@ namespace SolitaireConsole.UI {
 			// --- Rysowanie kolumn Tableau [T1-T7] ---
 			Console.WriteLine($"Kolumny Gry{(ShowPileIds ? " [T1-T7]" : "")}:");
 			DisplayPiles([.. game.Tableaux.Cast<CardPile>()]);
+			if (_context != null) DisplayTableauSelectionIndicator();
 			Console.WriteLine("\n" + new string('-', Console.WindowWidth > 0 ? Console.WindowWidth - 1 : 80)); // Linia oddzielająca
 		}
 
@@ -115,9 +136,15 @@ namespace SolitaireConsole.UI {
 
 			if (matrix.Count == 0) return;
 			int maxRows = matrix.Max(col => col.Count);
-			for (int row = 0; row < maxRows; row++) {
+			for (int row = 0; row < maxRows + Convert.ToInt32(_context != null); row++) { // Jeśli wprowadzanie jest za pomocą strzałek to dodajemy dodatkowy wiersz na strzałkę
 				for (int col = 0; col < matrix.Count; col++) {
 					var pile = matrix[col];
+
+					//if (row == pile.Count && true && _context?.SelectedDestTableauIndex == col) {
+					//	DisplayTableauSelectionIndicator();
+					//	continue;
+					//}
+
 					if (row >= pile.Count) {
 						Console.Write("    ");
 						continue;
@@ -126,8 +153,8 @@ namespace SolitaireConsole.UI {
 					var cardSpot = pile[row];
 					var pileInfo = cardSpot.PileInfo;
 
-					bool isCellSelected = IsMatrixCellSelected(pileInfo, row, col);
-					if (isCellSelected) Console.BackgroundColor = ConsoleColor.Gray;
+					ConsoleColor cellColor = GetMatrixCellBg(pileInfo, row, col);
+					Console.BackgroundColor = cellColor;
 
 					if (cardSpot.Card != null) DisplayCard(cardSpot.Card);
 					else if (cardSpot.Suit != null) {
@@ -142,8 +169,8 @@ namespace SolitaireConsole.UI {
 					}
 
 					Console.ResetColor();
-					
-					if ((pileInfo.DisplayDirection == DisplayDirection.Vertical || col == pileInfo.CardsToDisplay.Count - 1) && pileInfo.ShowAmount != null) { 
+
+					if ((pileInfo.DisplayDirection == DisplayDirection.Vertical || col == pileInfo.CardsToDisplay.Count - 1) && pileInfo.ShowAmount != null) {
 						Console.Write($" ({pileInfo.ShowAmount})");
 					}
 
@@ -152,6 +179,18 @@ namespace SolitaireConsole.UI {
 
 				if (row < maxRows - 1) Console.WriteLine();
 			}
+		}
+
+		private void DisplayTableauSelectionIndicator() {
+			if (!_context!.SelectingDestiantionOnTableau) { 
+				Console.Write("\n" + new string(' ', 4 * 7));
+				return;
+			}
+
+			// TODO: Add validation
+			Console.Write("\n" + new string(' ', 4 * _context.SelectedDestTableauIndex!.Value));
+			Console.Write(" ^  ");
+			Console.Write("\n" + new string(' ', 4 * (6 - _context.SelectedDestTableauIndex!.Value)));
 		}
 
 		private static void DisplayCard(Card card) {

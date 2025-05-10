@@ -15,8 +15,11 @@ namespace SolitaireConsole.InteractionModes {
 	}
 
 	public class ArrowInteractionContext() {
-		public PileType selectedArea = PileType.Tableau;
-		public int? selectedTableauIndex = 0; // Index kolumny głównego obszaru gry (Tableau)
-		public int selectedCardIndex = 0; // Index karty w wybranym stosie (poziomo, ale pionowo dla Tableau - to nie ma większego znaczenia)
+		public PileType SelectedArea = PileType.Tableau;
+		public int? SelectedTableauIndex = 0; // Index kolumny głównego obszaru gry (Tableau)
+		public int SelectedCardIndex = 0; // Index karty w wybranym stosie (poziomo, ale pionowo dla Tableau - to nie ma większego znaczenia)
+
+		public bool SelectingDestiantionOnTableau => SelectedDestTableauIndex != null;
+		public int? SelectedDestTableauIndex;
 	}
 }
