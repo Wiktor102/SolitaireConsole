@@ -103,8 +103,7 @@ namespace SolitaireConsole.UI {
 
 				new("u", "Cofnij ostatni ruch", (g, ctx) => ctx != null && g.CanUndoLastMove()),
 				new("l", "Pokaż ranking", (g, ctx) => true),
-				new("r", "Rozpocznij ponownie", (g, ctx) => true),
-				new("q", "Zakończ grę", (g, ctx) => true)
+				new("q", "Zakończ grę / rozpocznij od nowa", (g, ctx) => true)
 			};
 		}
 

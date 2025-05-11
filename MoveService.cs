@@ -16,7 +16,7 @@ namespace SolitaireConsole {
 			ValidatePiles(sourceType, sourceIndex, destType, destIndex, sourcePile, destPile); // Throws if invalid
 
 			// 2. Determine cards to move
-			var movedCards = ExtractMovedCards(sourceType, sourceIndex, cardCount, sourcePile!);
+			var movedCards = ExtractMovedCards(sourceType, cardCount, sourcePile!);
 			if (movedCards.Count == 0) {
 				throw new EmptyPileException("Brak kart do przeniesienia.");
 			}
@@ -88,21 +88,13 @@ namespace SolitaireConsole {
 		}
 
 		// Extract the cards to move (single card or sequence)
-		private List<Card> ExtractMovedCards(PileType sourceType, int sourceIndex, int cardCount, CardPile sourcePile) {
+		private List<Card> ExtractMovedCards(PileType sourceType, int cardCount, CardPile sourcePile) {
 			if (sourcePile.IsEmpty) throw new EmptyPileException("Stos źródłowy jest pusty.");
-
 			if (sourceType == PileType.Tableau && sourcePile is TableauPile tableau) {
-				if (cardCount == 1) { // Moving a single card from Tableau
-					Card? topCard = tableau.Cards.LastOrDefault();
-					if (topCard == null || !topCard.IsFaceUp) { // Ensure single card is face up
-						throw new InvalidMoveRuleException("Nie można przenieść zakrytej karty lub gdy stos Tableau jest pusty.");
-					}
-					// Fall through to general card removal logic for single card
-				} else if (cardCount > 1)  {// Moving a sequence from Tableau (original logic)
-					var sequence = tableau.GetFaceUpSequence(sourceIndex); // Check based on original sourceIndex for tableau sequence
-					if (sequence.Count < cardCount) {
-						throw new InvalidCardSequenceException("Niewystarczająca liczba odkrytych kart w sekwencji.");
-					}
+				if (cardCount > 1) {
+					int startIndexInPile = tableau.Cards.Count - cardCount;
+					var sequence = tableau.GetFaceUpSequence(startIndexInPile);
+					if (sequence.Count < cardCount) throw new InvalidCardSequenceException("Niewystarczająca liczba odkrytych kart w sekwencji.");
 
 					// Validate the sequence itself before attempting to remove
 					for (int i = 0; i < cardCount - 1; i++) {
@@ -113,14 +105,18 @@ namespace SolitaireConsole {
 
 					return tableau.RemoveSequence(tableau.Cards.Count - cardCount); // Remove from end of pile
 				}
+
+				// Przenoszenie pojedyńczej karty ze stosu Tableau
+				Card? topCard = tableau.Cards.LastOrDefault();
+				if (topCard == null || !topCard.IsFaceUp) { // Sprawdź czy każda karta jest na pewno odkryta
+					throw new InvalidMoveRuleException("Nie można przenieść zakrytej karty lub gdy stos Tableau jest pusty.");
+				}
 			}
 
-			// This part handles:
-			// - Single card from Tableau (after IsFaceUp check)
-			// - Cards from Waste or other piles
-			if (cardCount > sourcePile.Count) {
-				throw new InvalidCardSequenceException("Nie można przenieść więcej kart niż jest na stosie.");
-			}
+			// Poniższy kod przenosi:
+			// - Pojedynczą kartę z Tableau (po sprawdzeniu IsFaceUp)
+			// - Karty z Waste lub innych stosów
+			if (cardCount > sourcePile.Count) throw new InvalidCardSequenceException("Nie można przenieść więcej kart niż jest na stosie.");
 			return sourcePile.RemoveTopCards(cardCount);
 		}
 
