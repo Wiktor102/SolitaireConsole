@@ -114,10 +114,7 @@ namespace SolitaireConsole.Input {
 				if (wasteCount == 0) return;
 
 				_context.SelectedArea = PileType.Waste;
-				_context.SelectedCardIndex = 0;
-			} else if (_context.SelectedArea == PileType.Waste) {
-				int wasteCount = game.Waste.Cards.Count;
-				_context.SelectedCardIndex = Math.Min(_context.SelectedCardIndex + 1, wasteCount - 1);
+				_context.SelectedCardIndex = game.Difficulty == DifficultyLevel.Hard ? 2 : 0; // W trybie trudnym wierzchnia karta wyświetlana jest jako trzecia
 			}
 		}
 
@@ -130,12 +127,8 @@ namespace SolitaireConsole.Input {
 			if (_context.SelectedArea == PileType.Tableau) {
 				UpdateTableauSelection(-1);
 			} else if (_context.SelectedArea == PileType.Waste) {
-				if (_context.SelectedCardIndex == 0) {
-					_context.SelectedArea = PileType.Stock;
-					return;
-				}
-
-				_context.SelectedCardIndex = Math.Max(_context.SelectedCardIndex - 1, 0);
+				_context.SelectedArea = PileType.Stock;
+				_context.SelectedCardIndex = 0; // Reset card index for stock
 			}
 		}
 
@@ -147,7 +140,7 @@ namespace SolitaireConsole.Input {
 						_ => game.Waste.Cards.Count > 0 ? PileType.Waste : PileType.Stock
 					};
 
-					_context.SelectedCardIndex = 0;
+					_context.SelectedCardIndex = _context.SelectedArea == PileType.Waste && game.Difficulty == DifficultyLevel.Hard ? 2 : 0;
 					return;
 				}
 
@@ -237,9 +230,9 @@ namespace SolitaireConsole.Input {
 				return;
 			}
 
-			// TODO: Do sprawdzenia po naprawieniu tego, że tylko wierzchnią można zagrać
-			int wasteCount = game.Waste.Cards.Count;
-			_context.SelectedCardIndex = Math.Clamp(_context.SelectedCardIndex, 0, wasteCount - 1);
+			// Regardless of difficulty, if waste is selected and not empty,
+			// the selected card index should always be 0, representing the single playable card.
+			_context.SelectedCardIndex = 0;
 		}
 	}
 }

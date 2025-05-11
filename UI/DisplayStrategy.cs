@@ -147,11 +147,6 @@ namespace SolitaireConsole.UI {
 				for (int col = 0; col < matrix.Count; col++) {
 					var pile = matrix[col];
 
-					//if (row == pile.Count && true && _context?.SelectedDestTableauIndex == col) {
-					//	DisplayTableauSelectionIndicator();
-					//	continue;
-					//}
-
 					if (row >= pile.Count) {
 						Console.Write("    ");
 						continue;
@@ -163,8 +158,14 @@ namespace SolitaireConsole.UI {
 					ConsoleColor cellColor = GetMatrixCellBg(pileInfo, row, col);
 					Console.BackgroundColor = cellColor;
 
-					if (cardSpot.Card != null) DisplayCard(cardSpot.Card);
-					else if (cardSpot.Suit != null) {
+					if (cardSpot.Card != null) {
+						bool isPlayable = true;
+						if (pileInfo.PileType == PileType.Waste && game.Difficulty == DifficultyLevel.Hard) {
+							isPlayable = cardSpot.Card == game.Waste.GetPlayableCard();
+						}
+
+						DisplayCard(cardSpot.Card, isPlayable);
+					} else if (cardSpot.Suit != null) {
 						Console.Write("[");
 						var fg = Console.ForegroundColor;
 						Console.ForegroundColor = cardSpot.Suit.Value.GetColor();
@@ -189,7 +190,7 @@ namespace SolitaireConsole.UI {
 		}
 
 		private void DisplayTableauSelectionIndicator() {
-			if (!_context!.SelectingDestiantionOnTableau) { 
+			if (!_context!.SelectingDestiantionOnTableau) {
 				Console.Write("\n" + new string(' ', 4 * 7));
 				return;
 			}
@@ -197,12 +198,16 @@ namespace SolitaireConsole.UI {
 			// TODO: Add validation
 			Console.Write("\n" + new string(' ', 4 * _context.SelectedDestTableauIndex!.Value));
 			Console.Write(" ^  ");
-			Console.Write("\n" + new string(' ', 4 * (6 - _context.SelectedDestTableauIndex!.Value)));
+			//Console.Write("\n" + new string(' ', 4 * (6 - _context.SelectedDestTableauIndex!.Value)));
 		}
 
-		private static void DisplayCard(Card card) {
+		private static void DisplayCard(Card card, bool isPlayable = true) {
 			if (card.IsFaceUp) {
-				Console.ForegroundColor = card.Suit.GetColor();
+				if (isPlayable) {
+					Console.ForegroundColor = card.Suit.GetColor();
+				} else {
+					Console.ForegroundColor = ConsoleColor.Gray; // Jasny szary dla kart, któych nie można zagrać
+				}
 			} else {
 				Console.ForegroundColor = ConsoleColor.White; // Kolor dla zakrytych kart
 			}

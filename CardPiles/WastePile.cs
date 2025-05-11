@@ -38,5 +38,14 @@ namespace SolitaireConsole.CardPiles {
 				ShowAmount = Cards.Count
 			};
 		}
+
+		/// <summary>
+		/// Zwraca kartę, która jest aktualnie możliwa do zagrania.
+		/// </summary>
+		/// <returns>Aktualnie zagrywana karta lub null, jeśli nie ma kart do zagrania.</returns>
+		public Card? GetPlayableCard() {
+			if (IsEmpty) return null;
+			return cards.LastOrDefault();
+		}
 	}
 }
