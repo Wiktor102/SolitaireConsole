@@ -9,13 +9,7 @@ namespace SolitaireConsole.InteractionModes {
 		public void HandleInput(Action<GameResult> indicateGameEnd) => InputStrategy.HandleInput(indicateGameEnd);
 		public void Display() => RenderStrategy.Display();
 		public void DisplayHints() {
-			if (InputStrategy is ArrowInputStrategy) {
-				RenderStrategy.DisplayArrowInteractionModeHints();
-			} else if (InputStrategy is TextInputStrategy) {
-				RenderStrategy.DisplayTextInteractionModeHints();
-			} else {
-				throw new NotImplementedException("Nieznany typ strategii wejściowej.");
-			}
+			RenderStrategy.DisplayHints();
 		}
 	}
 }

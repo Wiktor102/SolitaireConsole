@@ -2,7 +2,7 @@ using System.Text;
 using SolitaireConsole.CardPiles;
 using SolitaireConsole.Utils;
 using SolitaireConsole.InteractionModes;
-using System.IO;
+using SolitaireConsole.Input;
 
 namespace SolitaireConsole.UI {
 	public struct PileDisplayInfo {
@@ -34,18 +34,82 @@ namespace SolitaireConsole.UI {
 		Vertical
 	}
 
-	public abstract class DisplayStrategy(Game game) {
-		protected Game game = game;
+	public abstract class DisplayStrategy {
+		protected Game game;
 		protected readonly ArrowInteractionContext? _context = null;
+		protected readonly List<InputActionHint> actionHints = [];
 		protected bool ShowPileIds => _context == null; // W trybie strzałek nie pokazujemy ID stosów
+
+		public DisplayStrategy(Game game) {
+			this.game = game;
+			actionHints = [
+				new("draw / d", "                       Dobierz kartę ze stosu [S]"),
+				new("move / m <źr> [cel] [liczba]", "   Przenieś kartę/sekwencję (np. m W T2, m T1 F1, m T3 T5 [liczba])"),
+				new("undo / u", "                       Cofnij ostatni ruch (do 3 ruchów)"),
+				new("score / h", "                      Pokaż ranking"),
+				new("restart / r", "                    Rozpocznij nową grę"),
+				new("quit / q", "                       Zakończ grę")
+			];
+		}
 
 		public DisplayStrategy(Game game, ArrowInteractionContext context) : this(game) {
 			_context = context;
+			actionHints = new List<InputActionHint> {
+				// Enter Key Actions
+				new("Enter",
+					(g, ctx) => ctx != null && ctx.SelectedDestTableauIndex.HasValue ? $"Potwierdź przeniesienie na kolumnę [T{ctx.SelectedDestTableauIndex.Value + 1}]" : "Potwierdź przeniesienie",
+					(g, ctx) => ctx != null && ctx.SelectingDestiantionOnTableau && (ctx.SelectedArea == PileType.Tableau || ctx.SelectedArea == PileType.Waste)),
+				new("Enter", "Przenieś na stos końcowy / Wybierz cel na kolumnie",
+					(g, ctx) => ctx != null && ctx.SelectedArea == PileType.Tableau && !ctx.SelectingDestiantionOnTableau && ctx.IsSelectedCardInTableauFaceUp(g)),
+				new("Enter", "Przenieś na stos końcowy / Wybierz cel na kolumnie",
+					(g, ctx) => ctx != null && ctx.SelectedArea == PileType.Waste && !ctx.SelectingDestiantionOnTableau && !g.Waste.IsEmpty),
+				new("Enter", "Dobierz karty",
+					(g, ctx) => ctx != null && ctx.SelectedArea == PileType.Stock && g.CanDrawFromStock()),
+
+				// Escape Key Actions
+				new("Esc", "Anuluj wybór celu",
+					(g, ctx) => ctx != null && ctx.SelectingDestiantionOnTableau),
+
+				// Up Arrow Key Actions
+				new("↑", "Wybierz kartę wyżej",
+					(g, ctx) => ctx != null && ctx.SelectedArea == PileType.Tableau && ctx.SelectedCardIndex > 0),
+				new("↑", "Przejdź do stosu rezerwowego",
+					(g, ctx) => ctx != null && ctx.SelectedArea == PileType.Tableau && ctx.SelectedCardIndex <= 3),
+				new("↑", "Przejdź do stosu kart odrzuconych",
+					(g, ctx) => ctx != null && ctx.SelectedArea == PileType.Tableau && ctx.SelectedCardIndex > 3 && !g.Waste.IsEmpty),
+
+				// Down Arrow Key Actions
+				new("↓", "Wybierz kartę niżej",
+					(g, ctx) => ctx != null && ctx.SelectedArea == PileType.Tableau && ctx.SelectedCardIndex < g.Tableaux[ctx.SelectedTableauIndex!.Value].Count - 1),
+				new("↓", "Przejdź do Kolumn Gry",
+					(g, ctx) => ctx != null && (ctx.SelectedArea == PileType.Stock || ctx.SelectedArea == PileType.Waste)),
+
+				// Left Arrow Key Actions
+				new("←", "Wybierz cel na kolumnie po lewej",
+					(g, ctx) => ctx != null && ctx.SelectingDestiantionOnTableau && ctx.SelectedDestTableauIndex!.Value > 0),
+				new("←", "Przejdź do kolumny po lewej",
+					(g, ctx) => ctx != null && ctx.SelectedArea == PileType.Tableau && !ctx.SelectingDestiantionOnTableau && ctx.SelectedTableauIndex!.Value > 0 && g.Tableaux.Take(ctx.SelectedTableauIndex.Value).Any(t => !t.IsEmpty)),
+				new("←", "Przejdź do Stosu",
+					(g, ctx) => ctx != null && ctx.SelectedArea == PileType.Waste && !ctx.SelectingDestiantionOnTableau),
+
+				// Right Arrow Key Actions
+				new("→", "Wybierz cel na kolumnie po prawej",
+					(g, ctx) => ctx != null && ctx.SelectingDestiantionOnTableau && ctx.SelectedDestTableauIndex.HasValue && ctx.SelectedDestTableauIndex.Value < 6),
+				new("→", "Przejdź do kolumny po prawej",
+					(g, ctx) => ctx != null && ctx.SelectedArea == PileType.Tableau && !ctx.SelectingDestiantionOnTableau && ctx.SelectedTableauIndex.HasValue && ctx.SelectedTableauIndex.Value < 6 && g.Tableaux.Skip(ctx.SelectedTableauIndex.Value + 1).Any(t => !t.IsEmpty)),
+				new("→", "Przejdź do Odrzuconych",
+					(g, ctx) => ctx != null && ctx.SelectedArea == PileType.Stock && !ctx.SelectingDestiantionOnTableau && !g.Waste.IsEmpty),
+
+
+				new("u", "Cofnij ostatni ruch", (g, ctx) => ctx != null && g.CanUndoLastMove()),
+				new("l", "Pokaż ranking", (g, ctx) => true),
+				new("r", "Rozpocznij ponownie", (g, ctx) => true),
+				new("q", "Zakończ grę", (g, ctx) => true)
+			};
 		}
 
 		public abstract void Display();
-		public abstract void DisplayTextInteractionModeHints();
-		public abstract void DisplayArrowInteractionModeHints();
+		public abstract void DisplayHints();
 
 		protected ConsoleColor GetMatrixCellBg(PileDisplayInfo info, int row, int column) {
 			const ConsoleColor normalColor = ConsoleColor.Black;
@@ -216,25 +280,14 @@ namespace SolitaireConsole.UI {
 			Console.ResetColor(); // Resetuj kolor po wyświetleniu karty
 		}
 
-
-		public override void DisplayTextInteractionModeHints() {
+		public override void DisplayHints() {
 			Console.WriteLine("\nAkcje:");
-			Console.WriteLine(" - draw / d           : Dobierz kartę ze stosu [S]");
-			Console.WriteLine(" - move / m [źr] [cel]: Przenieś kartę/sekwencję (np. m W T2, m T1 F1, m T3 T5 [liczba])");
-			Console.WriteLine(" - undo / u           : Cofnij ostatni ruch (do 3 ruchów)");
-			Console.WriteLine(" - score / h          : Pokaż ranking");
-			Console.WriteLine(" - restart / r        : Rozpocznij nową grę");
-			Console.WriteLine(" - quit / q           : Zakończ grę");
+			foreach (var hint in actionHints) {
+				if (hint.IsAvailable(game, _context)) {
+					Console.WriteLine($" - {hint.KeySymbol} : {hint.GetDescription(game, _context)}");
+				}
+			}
 		}
 
-		public override void DisplayArrowInteractionModeHints() {
-			Console.WriteLine("\nAkcje:");
-			Console.WriteLine(" - ↑ : Dobierz kartę ze stosu [S]");
-			Console.WriteLine(" - ↓ : Przenieś kartę/sekwencję (np. ↓ W T2, ↓ T1 F1, ↓ T3 T5 [liczba])");
-			Console.WriteLine(" - ← : Cofnij ostatni ruch (do 3 ruchów)");
-			Console.WriteLine(" - → : Pokaż ranking");
-			Console.WriteLine(" - Esc: Rozpocznij nową grę");
-			Console.WriteLine(" - q  : Zakończ grę");
-		}
 	}
 }

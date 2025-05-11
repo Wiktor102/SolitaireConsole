@@ -208,6 +208,16 @@ namespace SolitaireConsole {
 			}
 		}
 
+		public bool CanUndoLastMove() {
+			return _moveHistory.Count > 0;
+		}
+
+		public bool CanDrawFromStock() {
+			// Can always attempt to draw. If stock is empty, it will try to reset from waste.
+			// The DrawFromStock method itself handles the logic of empty stock/waste.
+			return true; 
+		}
+
 		// Internal helper for MoveService to add a move record with undo history handling
 		internal void AddMoveRecord(MoveRecord record) {
 			if (_moveHistory.Count >= MaxUndoSteps) _moveHistory.Pop();
