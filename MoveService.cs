@@ -49,40 +49,102 @@ namespace SolitaireConsole
             return true;
         }
 
+        public bool TryAutoMoveToFoundation(PileType sourceType, int sourceIndex)
+        {
+            var sourcePile = GetPile(sourceType, sourceIndex);
+            if (sourcePile == null || sourcePile.IsEmpty)
+            {
+                return false; // Source pile invalid or empty
+            }
+
+            Card? cardToConsiderForAutoMove;
+
+            if (sourceType == PileType.Tableau)
+            {
+                if (sourcePile is TableauPile tableauPile)
+                {
+                    cardToConsiderForAutoMove = tableauPile.Cards.LastOrDefault();
+                    // Pre-check: card must exist and be face up for auto-move consideration
+                    if (cardToConsiderForAutoMove == null || !cardToConsiderForAutoMove.IsFaceUp)
+                    {
+                        return false;
+                    }
+                }
+                else
+                {
+                    return false; // Should not happen if GetPile is correct
+                }
+            }
+            else if (sourceType == PileType.Waste)
+            {
+                cardToConsiderForAutoMove = sourcePile.PeekTopCard();
+                if (cardToConsiderForAutoMove == null)
+                {
+                    return false; // Waste pile is empty
+                }
+            }
+            else
+            {
+                return false; // Auto-move is primarily for Tableau and Waste
+            }
+
+            // Find a suitable foundation
+            for (int i = 0; i < _game.Foundations.Count; i++)
+            {
+                var foundationPile = _game.Foundations[i];
+                if (foundationPile.CanAddCard(cardToConsiderForAutoMove))
+                {
+                    // Attempt the move. TryMove will handle detailed validation,
+                    // including the IsFaceUp check again via ExtractMovedCards for Tableau.
+                    return TryMove(sourceType, sourceIndex, PileType.Foundation, i, 1);
+                }
+            }
+
+            return false; // No suitable foundation found or move failed
+        }
+
         // Validate that both source and destination piles exist
         private void ValidatePiles(PileType sourceType, int sourceIndex, PileType destType, int destIndex, CardPile? sourcePile, CardPile? destPile)
         {
-            if (sourcePile == null)
-            {
-                throw new InvalidPileException($"Nieprawidłowy stos źródłowy: {sourceType}{(sourceIndex >= 0 ? sourceIndex + 1 : "")}");
-            }
-            if (destPile == null)
-            {
-                throw new InvalidPileException($"Nieprawidłowy stos docelowy: {destType}{(destIndex >= 0 ? destIndex + 1 : "")}");
-            }
+            if (sourcePile == null) throw new InvalidPileException($"Nieprawidłowy stos źródłowy: {sourceType}{(sourceIndex >= 0 ? sourceIndex + 1 : "")}");
+            if (destPile == null) throw new InvalidPileException($"Nieprawidłowy stos docelowy: {destType}{(destIndex >= 0 ? destIndex + 1 : "")}");
         }
 
         // Extract the cards to move (single card or sequence)
         private List<Card> ExtractMovedCards(PileType sourceType, int sourceIndex, int cardCount, CardPile sourcePile)
         {
-            if (sourcePile.IsEmpty)
+            if (sourcePile.IsEmpty) throw new EmptyPileException("Stos źródłowy jest pusty.");
+
+            if (sourceType == PileType.Tableau && sourcePile is TableauPile tableau)
             {
-                throw new EmptyPileException("Stos źródłowy jest pusty.");
-            }
-            if (sourceType == PileType.Tableau && cardCount > 1 && sourcePile is TableauPile tableau)
-            {
-                var sequence = tableau.GetFaceUpSequence(sourceIndex); // Check based on original sourceIndex for tableau sequence
-                if (sequence.Count < cardCount) {
-                    throw new InvalidCardSequenceException("Niewystarczająca liczba odkrytych kart w sekwencji.");
-                }
-                // Validate the sequence itself before attempting to remove
-                for (int i = 0; i < cardCount -1; i++) {
-                    if (sequence[i].Color == sequence[i+1].Color || sequence[i].Rank != sequence[i+1].Rank + 1) {
-                        throw new InvalidCardSequenceException("Niepoprawna sekwencja kart do przeniesienia (kolor lub wartość).");
+                if (cardCount == 1) // Moving a single card from Tableau
+                {
+                    Card? topCard = tableau.Cards.LastOrDefault();
+                    if (topCard == null || !topCard.IsFaceUp) // Ensure single card is face up
+                    {
+                        throw new InvalidMoveRuleException("Nie można przenieść zakrytej karty lub gdy stos Tableau jest pusty.");
                     }
+                    // Fall through to general card removal logic for single card
                 }
-                return tableau.RemoveSequence(tableau.Cards.Count - cardCount); // Remove from end of pile
+                else if (cardCount > 1) // Moving a sequence from Tableau (original logic)
+                {
+                    var sequence = tableau.GetFaceUpSequence(sourceIndex); // Check based on original sourceIndex for tableau sequence
+                    if (sequence.Count < cardCount) {
+                        throw new InvalidCardSequenceException("Niewystarczająca liczba odkrytych kart w sekwencji.");
+                    }
+                    // Validate the sequence itself before attempting to remove
+                    for (int i = 0; i < cardCount -1; i++) {
+                        if (sequence[i].Color == sequence[i+1].Color || sequence[i].Rank != sequence[i+1].Rank + 1) {
+                            throw new InvalidCardSequenceException("Niepoprawna sekwencja kart do przeniesienia (kolor lub wartość).");
+                        }
+                    }
+                    return tableau.RemoveSequence(tableau.Cards.Count - cardCount); // Remove from end of pile
+                }
             }
+
+            // This part handles:
+            // - Single card from Tableau (after IsFaceUp check)
+            // - Cards from Waste or other piles
             if (cardCount > sourcePile.Count)
             {
                 throw new InvalidCardSequenceException("Nie można przenieść więcej kart niż jest na stosie.");

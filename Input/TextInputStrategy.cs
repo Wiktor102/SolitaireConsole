@@ -23,12 +23,41 @@ namespace SolitaireConsole.Input {
 
 					case "move":
 					case "m":
-						if (parts.Length < 3) {
-							game.SetLastMoveError("Nieprawidłowa komenda 'move'. Użycie: move [źródło] [cel] [liczba_kart - opcjonalnie]. Źródła: W, F1-F4, T1-T7. Cele: F1-F4, T1-T7.");
+						if (parts.Length < 2) {
+							game.SetLastMoveError("Nieprawidłowa komenda 'move'. Użycie: move [źródło] ([cel] [liczba_kart - opcjonalnie]). Źródła: W, F1-F4, T1-T7. Cele: F1-F4, T1-T7.");
 							return;
 						}
 
 						string sourceStr = parts[1].ToUpper();
+						int sourceIndex = ParsePileString(sourceStr, out PileType sourceType);
+
+						if (sourceIndex == -1 || sourceType == PileType.Stock) { // Nie można ruszać ze Stock bezpośrednio
+							game.SetLastMoveError($"Nieprawidłowe źródło: {sourceStr}");
+							return;
+						}
+
+						// Sprawdź czy jest to próba automatycznego przeniesienia (podano tylko źródło)
+						if (parts.Length == 2) {
+							if (sourceType == PileType.Tableau || sourceType == PileType.Waste) {
+								if (!game.TryAutoMoveToFoundation(sourceType, sourceIndex)) {
+									// Wiadomość o błędzie jest ustawiana w TryAutoMoveToFoundation lub w TryMove
+									// Jeśli zwróci false i nie ustawiono błędu, oznacza to, że nie znaleziono poprawnego automatycznego ruchu.
+									if (string.IsNullOrEmpty(game.LastMoveError)) {
+										game.SetLastMoveError("Nie można automatycznie przenieść karty na fundament.");
+									}
+								}
+							} else {
+								game.SetLastMoveError("Automatyczne przenoszenie jest możliwe tylko ze stosów Tableau (T) lub kart odrzuconych (W).");
+							}
+							return;
+						}
+
+						// Zwykły ruch z źródła do celu
+						if (parts.Length < 3) {
+							game.SetLastMoveError("Nieprawidłowa komenda 'move'. Musisz podać cel dla tego typu ruchu.");
+							return;
+						}
+
 						string destStr = parts[2].ToUpper();
 						int cardCount = 1; // Domyślnie przenosimy 1 kartę
 
@@ -41,14 +70,6 @@ namespace SolitaireConsole.Input {
 						}
 
 						// Parsowanie źródła
-						PileType sourceType;
-						int sourceIndex = ParsePileString(sourceStr, out sourceType);
-						if (sourceIndex == -1 || sourceType == PileType.Stock) { // Nie można ruszać ze Stock bezpośrednio
-							game.SetLastMoveError($"Nieprawidłowe źródło: {sourceStr}");
-							return;
-						}
-
-						// Parsowanie celu
 						PileType destType;
 						int destIndex = ParsePileString(destStr, out destType);
 						if (destIndex == -1 || destType == PileType.Stock || destType == PileType.Waste) { // Nie można ruszać na Stock ani Waste
@@ -109,6 +130,7 @@ namespace SolitaireConsole.Input {
 
 			if (string.IsNullOrEmpty(pileStr)) return -1;
 
+			// Pozwól na parsowanie S dla Stock dla potencjalnego przyszłego użycia, ale ruch z Stock jest nadal zabroniony przez logikę komendy.
 			char pileChar = pileStr[0];
 			string indexStr = pileStr.Length > 1 ? pileStr.Substring(1) : "";
 			int index = 0; // Domyślny indeks dla W

@@ -43,31 +43,29 @@ namespace SolitaireConsole.Input {
 			if (_context.SelectedArea == PileType.Tableau) {
 				TableauPile tableau = game.Tableaux[_context.SelectedTableauIndex!.Value];
 				Card selectedCard = tableau.Cards[_context.SelectedCardIndex];
-				if (!selectedCard.IsFaceUp) return; // Nie mozna przenosić zakrytej karty
-
-				List<Card> selectedCardSequence = tableau.Cards[_context.SelectedCardIndex..];
+				if (!selectedCard.IsFaceUp) return; // Check if the selected card is face up before allowing any move
 
 				if (_context.SelectingDestiantionOnTableau) {
 					int scrcIndex = _context.SelectedTableauIndex!.Value;
 					int destIndex = _context.SelectedDestTableauIndex!.Value;
 					_context.SelectedDestTableauIndex = null;
 
+					// Determine card count for T->T move based on selected card index
+					List<Card> selectedCardSequence = tableau.Cards[_context.SelectedCardIndex..];
 					if (game.TryMove(PileType.Tableau, scrcIndex, PileType.Tableau, destIndex, selectedCardSequence.Count)) {
 						RevalidateTableauSelection();
 					}
-
 					return;
 				}
 
-				
-				FoundationPile potentialFoundation = FoundationPile.GetPileForSuit(game.Foundations, selectedCard.Suit, out var i);
-
-				if (selectedCardSequence.Count == 1 && potentialFoundation.CanAddCard(selectedCard)) { // TODO: To jest niezaimplementowane przy trybie tekstowym -> będzie refactor
-					game.TryMove(PileType.Tableau, _context.SelectedTableauIndex!.Value, PileType.Foundation, i, 1);
+				// Attempt auto-move to foundation
+				if (game.TryAutoMoveToFoundation(PileType.Tableau, _context.SelectedTableauIndex!.Value)) {
 					RevalidateTableauSelection();
 					return;
 				}
 
+				// If auto-move to foundation was not possible or failed, and not selecting destination,
+				// initiate selection for T->T move.
 				_context.SelectedDestTableauIndex = 0;
 			} else if (_context.SelectedArea == PileType.Stock) {
 				game.DrawFromStock(); // TODO: Error message for DrawFromStock is handled internally or via LastMoveError
@@ -80,15 +78,15 @@ namespace SolitaireConsole.Input {
 					return;
 				}
 
+				if (game.TryAutoMoveToFoundation(PileType.Waste, 0)) {
+					RevalidateWasteSelection();
+					return;
+				}
+
 				Card? wasteTopCard = game.Waste.PeekTopCard();
-				if (wasteTopCard != null) {
-					FoundationPile potentialFoundation = FoundationPile.GetPileForSuit(game.Foundations, wasteTopCard.Suit, out var i);
-					if (potentialFoundation.CanAddCard(wasteTopCard)) {
-						if (game.TryMove(PileType.Waste, 0, PileType.Foundation, i, 1)) RevalidateWasteSelection();
-						return;
-					}
-				} else {
+				if (wasteTopCard == null) {
 					game.SetLastMoveError("Stos kart odrzuconych jest pusty.");
+					return;
 				}
 
 				_context.SelectedDestTableauIndex = 0;
@@ -183,7 +181,7 @@ namespace SolitaireConsole.Input {
 
 		private int FindNextNonEmptyTableau(int currentIndex, int direction) {
 			int index = currentIndex;
-			
+
 			while (true) {
 				int nextIndex = index + direction;
 				if (nextIndex < 0 || nextIndex > 6) return currentIndex;
@@ -193,7 +191,7 @@ namespace SolitaireConsole.Input {
 		}
 
 		private bool UpdateTableauCardSelection(int newIndex) {
-            if (_context.SelectedArea != PileType.Tableau) return false;
+			if (_context.SelectedArea != PileType.Tableau) return false;
 			var maxIndex = game.Tableaux[_context.SelectedTableauIndex!.Value].Count - 1;
 			var clampedIndex = Math.Clamp(newIndex, 0, maxIndex);
 			bool changed = _context.SelectedCardIndex != clampedIndex;

@@ -32,7 +32,7 @@ namespace SolitaireConsole {
 			_moveHistory = new Stack<MoveRecord>();
 			MovesCount = 0;
 			_highScoreManager = new HighScoreManager("highscores.txt");
-			_interactionMode = new ArrowInteractionMode(this);
+			_interactionMode = new TextInteractionMode(this);
 			_moveService = new MoveService(this);
 
 			// Initialize empty Foundation and Tableau piles
@@ -98,6 +98,17 @@ namespace SolitaireConsole {
 			ClearLastMoveError();
 			try {
 				return _moveService.TryMove(sourceType, sourceIndex, destType, destIndex, cardCount);
+			} catch (MoveException ex) {
+				SetLastMoveError(ex.Message);
+				return false;
+			}
+		}
+
+		// Metoda do próby automatyczneo przeniesienia karty na stos końcowy (Foundation)
+		public bool TryAutoMoveToFoundation(PileType sourceType, int sourceIndex) {
+			ClearLastMoveError();
+			try {
+				return _moveService.TryAutoMoveToFoundation(sourceType, sourceIndex);
 			} catch (MoveException ex) {
 				SetLastMoveError(ex.Message);
 				return false;
@@ -284,7 +295,7 @@ namespace SolitaireConsole {
 
 				// Wyświetl dostępne akcje
 				_interactionMode.DisplayHints();
-				
+
 
 				GameResult? result = null; // Domyślny wynik
 				_interactionMode.HandleInput((r) => result = r); // Obsłuż wejście użytkownika
