@@ -1,3 +1,4 @@
+using SolitaireConsole.UI;
 using System.Text;
 
 namespace SolitaireConsole {
@@ -7,6 +8,7 @@ namespace SolitaireConsole {
 	public class DifficultySelector {
 		private string[] options = ["Łatwy (dobieranie 1 karty)", "Trudny (dobieranie 3 kart)", "Wyjdź"];
 		private int selectedIndex = 0;
+		private readonly MenuRenderer _renderer = new ConsoleMenuRenderer();
 
 		/// <summary>
 		/// Wyświetla menu wyboru poziomu trudności i zwraca wybrany poziom
@@ -31,30 +33,29 @@ namespace SolitaireConsole {
 		/// </summary>
 		private void DisplayMenu() {
 			Console.Clear();
-			Console.WriteLine("Wybierz poziom trudności (użyj strzałek góra/dół i Enter):");
-			Console.WriteLine("---------------------------------------------------------");
 
-			for (int i = 0; i < options.Length; i++) {
-				DisplayMenuItem(i);
-			}
+			Console.ForegroundColor = ConsoleColor.Green;
+			string[] heading = [
+				@" ______   ______     ______       __     ______     __   __     ______   ",
+				@"/\  == \ /\  __ \   /\  ___\     /\ \   /\  __ \   /\ ""-.\ \   /\  ___\  ",
+				@"\ \  _-/ \ \  __ \  \ \___  \   _\_\ \  \ \  __ \  \ \ \-.  \  \ \___  \ ",
+				@" \ \_\    \ \_\ \_\  \/\_____\ /\_____\  \ \_\ \_\  \ \_\\""\_\  \/\_____\",
+				@"  \/_/     \/_/\/_/   \/_____/ \/_____/   \/_/\/_/   \/_/ \/_/   \/_____/"
+			];
+			_renderer.DisplayText(heading);
+			Console.ResetColor();
+			Console.WriteLine();
+			_renderer.DisplayTextLine("Wybierz poziom trudności:");
 
-			Console.WriteLine("---------------------------------------------------------");
+			for (int i = 0; i < options.Length; i++) DisplayMenuItem(i);
+			_renderer.DisplayDividerLine();
 		}
 
 		/// <summary>
 		/// Wyświetla pojedynczą opcję menu
 		/// </summary>
 		private void DisplayMenuItem(int index) {
-			if (index == selectedIndex) {
-				Console.BackgroundColor = ConsoleColor.Gray;
-				Console.ForegroundColor = ConsoleColor.Black;
-				Console.Write("> "); // Wskaźnik wybranej opcji
-			} else {
-				Console.Write("  ");
-			}
-
-			Console.WriteLine(options[index]);
-			Console.ResetColor(); // Resetuj kolory po każdej opcji
+			_renderer.DisplayMenuOption(options[index], index == selectedIndex);
 		}
 
 		/// <summary>

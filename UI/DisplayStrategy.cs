@@ -109,6 +109,7 @@ namespace SolitaireConsole.UI {
 
 		public abstract void Display();
 		public abstract void DisplayHints();
+		public abstract void DisplayWinScreen();
 
 		protected ConsoleColor GetMatrixCellBg(PileDisplayInfo info, int row, int column) {
 			const ConsoleColor normalColor = ConsoleColor.Black;
@@ -288,5 +289,13 @@ namespace SolitaireConsole.UI {
 			}
 		}
 
+		public override void DisplayWinScreen() {
+			Console.Clear();
+			Console.WriteLine("Gratulacje! Wygrałeś!");
+			Console.WriteLine($"Liczba ruchów: {game.MovesCount}");
+			// Console.WriteLine($"Czas gry: {game.ElapsedTime}");
+			Console.WriteLine("Naciśnij dowolny klawisz, aby zakończyć grę.");
+			Console.ReadKey(true);
+		}
 	}
 }
