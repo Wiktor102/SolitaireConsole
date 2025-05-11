@@ -54,7 +54,7 @@ namespace SolitaireConsole {
 			// Jeśli Stock jest pusty, przenieś karty z Waste z powrotem do Stock
 			if (Stock.IsEmpty) {
 				if (Waste.IsEmpty) {
-					Console.WriteLine("Brak kart do dobrania i stos odrzuconych jest pusty.");
+					SetLastMoveError("Brak kart do dobrania i stos odrzuconych jest pusty.");
 					return false; // Nic się nie dzieje
 				}
 
@@ -117,8 +117,9 @@ namespace SolitaireConsole {
 
 		// Metoda do cofania ostatniego ruchu
 		public bool UndoLastMove() {
+			ClearLastMoveError(); // Clear any previous error
 			if (_moveHistory.Count == 0) {
-				Console.WriteLine("Brak ruchów do cofnięcia.");
+				SetLastMoveError("Brak ruchów do cofnięcia.");
 				return false;
 			}
 
@@ -135,7 +136,7 @@ namespace SolitaireConsole {
 							   // Dodaj karty z rekordu z powrotem do Waste (w oryginalnej kolejności)
 				Waste.AddCards(lastMove.MovedCards);
 				MovesCount--; // Zmniejsz licznik ruchów
-				Console.WriteLine("Cofnięto reset stosu.");
+				// Console.WriteLine("Cofnięto reset stosu."); // Removed success message
 				return true;
 			}
 			// Sprawdź, czy to był ruch dobrania kart (Stock -> Waste)
@@ -155,7 +156,7 @@ namespace SolitaireConsole {
 					Stock.AddCard(card);
 				}
 				MovesCount--; // Zmniejsz licznik ruchów
-				Console.WriteLine("Cofnięto dobranie kart.");
+				// Console.WriteLine("Cofnięto dobranie kart."); // Removed success message
 				return true;
 			} else // Standardowy ruch między stosami
 			  {
@@ -163,8 +164,8 @@ namespace SolitaireConsole {
 				CardPile? destPile = GetPile(lastMove.DestPileType, lastMove.DestPileIndex);
 
 				if (sourcePile == null || destPile == null) {
-					Console.WriteLine("Błąd wewnętrzny: Nie można znaleźć stosów dla cofnięcia ruchu.");
-					// Potencjalnie przywróć ruch do historii? Na razie zakładamy błąd krytyczny.
+					SetLastMoveError("Błąd wewnętrzny: Nie można znaleźć stosów dla cofnięcia ruchu.");
+					_moveHistory.Push(lastMove); // Przywróć ruch do historii, bo cofnięcie się nie powiodło
 					return false;
 				}
 
@@ -174,10 +175,11 @@ namespace SolitaireConsole {
 				List<Card> removedFromDest = destPile.RemoveTopCards(lastMove.MovedCards.Count);
 
 				// Sprawdzenie, czy usunięte karty zgadzają się z zapisanymi (sanity check)
+				// Ta weryfikacja jest kluczowa. Jeśli karty się nie zgadzają, coś poszło bardzo nie tak.
 				if (!AreCardListsEqual(removedFromDest, lastMove.MovedCards)) {
-					Console.WriteLine("Błąd krytyczny: Niezgodność kart podczas cofania ruchu!");
-					// Przywróć stan przed próbą cofnięcia?
-					destPile.AddCards(removedFromDest); // Przywróć usunięte karty
+					SetLastMoveError("Błąd krytyczny: Niezgodność kart podczas cofania ruchu!");
+					// Przywróć stan przed próbą cofnięcia
+					destPile.AddCards(removedFromDest); // Przywróć usunięte karty na stos docelowy
 					_moveHistory.Push(lastMove); // Przywróć ruch do historii
 					return false;
 				}
@@ -192,7 +194,11 @@ namespace SolitaireConsole {
 							topCard.IsFaceUp = false;
 						} else {
 							// To nie powinno się zdarzyć, jeśli WasSourceTopCardFlipped=true
-							Console.WriteLine("Ostrzeżenie: Próbowano zakryć kartę na pustym stosie źródłowym podczas cofania.");
+							// To jest bardziej ostrzeżenie deweloperskie niż błąd dla użytkownika,
+							// ale można je zarejestrować, jeśli istnieje system logowania.
+							// Na potrzeby gry konsolowej, można to zignorować lub ustawić łagodny błąd.
+							SetLastMoveError("Ostrzeżenie: Próbowano zakryć kartę na pustym stosie źródłowym podczas cofania.");
+							// Rozważ, czy to jest błąd krytyczny dla cofania. Prawdopodobnie nie, więc kontynuuj.
 						}
 					}
 				}
@@ -203,7 +209,7 @@ namespace SolitaireConsole {
 
 
 				MovesCount--; // Zmniejsz licznik ruchów
-				Console.WriteLine("Cofnięto ostatni ruch.");
+				// Console.WriteLine("Cofnięto ostatni ruch."); // Removed success message
 				return true;
 			}
 		}

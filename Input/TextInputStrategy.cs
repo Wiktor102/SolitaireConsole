@@ -24,7 +24,7 @@ namespace SolitaireConsole.Input {
 					case "move":
 					case "m":
 						if (parts.Length < 2) {
-							game.SetLastMoveError("Nieprawidłowa komenda 'move'. Użycie: move [źródło] ([cel] [liczba_kart - opcjonalnie]). Źródła: W, F1-F4, T1-T7. Cele: F1-F4, T1-T7.");
+							game.SetLastMoveError("Nieprawidłowa komenda 'move'. Użycie: move [źródło] ([cel] [liczba_kart - opcjonalnie]). Źródła: W, F1-F4, T1-T7.");
 							return;
 						}
 
@@ -83,7 +83,7 @@ namespace SolitaireConsole.Input {
 
 					case "undo":
 					case "u":
-						if (!game.UndoLastMove()) game.Pause(); // Komunikat o błędzie jest już wyświetlany w UndoLastMove
+						game.UndoLastMove(); // Wiadomość o błędzie jest ustawiana w UndoLastMove i wyświetlana przez DisplayStrategy
 						break;
 
 					case "score":

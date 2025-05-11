@@ -26,6 +26,9 @@ namespace SolitaireConsole.Input {
 				case ConsoleKey.Escape:
 					Escape();
 					break;
+				case ConsoleKey.U:
+					game.UndoLastMove();
+					break;
 				case ConsoleKey.Q: // Added for consistency with text mode
 					Console.Write("Czy na pewno chcesz zakończyć grę? (t/n): ");
 					if (Console.ReadKey().KeyChar == 't' || Console.ReadKey().KeyChar == 'T') {
