@@ -15,18 +15,16 @@ namespace SolitaireConsole.Input {
 					case "draw":
 					case "d":
 						if (!game.DrawFromStock()) {
-							Console.WriteLine("Nie można dobrać karty.");
-							game.Pause();
+							// TODO:
+							// Error message for DrawFromStock is handled internally or via LastMoveError by DrawFromStock itself if necessary
+							// No specific SetLastMoveError here unless DrawFromStock is changed to throw exceptions too.
 						}
 						break;
 
 					case "move":
 					case "m":
 						if (parts.Length < 3) {
-							Console.WriteLine("Nieprawidłowa komenda 'move'. Użycie: move [źródło] [cel] [liczba_kart - opcjonalnie]");
-							Console.WriteLine("Źródła: S (Stock - nie można), W (Waste), F1-F4 (Foundation), T1-T7 (Tableau)");
-							Console.WriteLine("Cele: F1-F4, T1-T7");
-							game.Pause();
+							game.SetLastMoveError("Nieprawidłowa komenda 'move'. Użycie: move [źródło] [cel] [liczba_kart - opcjonalnie]. Źródła: W, F1-F4, T1-T7. Cele: F1-F4, T1-T7.");
 							return;
 						}
 
@@ -37,8 +35,7 @@ namespace SolitaireConsole.Input {
 						// Sprawdź, czy podano liczbę kart (dla ruchu T->T)
 						if (parts.Length > 3) {
 							if (!int.TryParse(parts[3], out cardCount) || cardCount < 1) {
-								Console.WriteLine("Nieprawidłowa liczba kart. Musi być dodatnią liczbą całkowitą.");
-								game.Pause();
+								game.SetLastMoveError("Nieprawidłowa liczba kart. Musi być dodatnią liczbą całkowitą.");
 								return;
 							}
 						}
@@ -46,36 +43,26 @@ namespace SolitaireConsole.Input {
 						// Parsowanie źródła
 						PileType sourceType;
 						int sourceIndex = ParsePileString(sourceStr, out sourceType);
-						if (sourceIndex == -1 || sourceType == PileType.Stock) // Nie można ruszać ze Stock bezpośrednio
-						{
-							Console.WriteLine($"Nieprawidłowe źródło: {sourceStr}");
-							game.Pause();
+						if (sourceIndex == -1 || sourceType == PileType.Stock) { // Nie można ruszać ze Stock bezpośrednio
+							game.SetLastMoveError($"Nieprawidłowe źródło: {sourceStr}");
 							return;
 						}
 
 						// Parsowanie celu
 						PileType destType;
 						int destIndex = ParsePileString(destStr, out destType);
-						if (destIndex == -1 || destType == PileType.Stock || destType == PileType.Waste) // Nie można ruszać na Stock ani Waste
-						{
-							Console.WriteLine($"Nieprawidłowy cel: {destStr}");
-							game.Pause();
+						if (destIndex == -1 || destType == PileType.Stock || destType == PileType.Waste) { // Nie można ruszać na Stock ani Waste
+							game.SetLastMoveError($"Nieprawidłowy cel: {destStr}");
 							return;
 						}
 
 						// Wykonaj ruch
-						if (!game.TryMove(sourceType, sourceIndex, destType, destIndex, cardCount)) {
-							// Komunikat o błędzie jest już wyświetlany w TryMove
-							game.Pause();
-						}
+						game.TryMove(sourceType, sourceIndex, destType, destIndex, cardCount); // Błąd jest "łapany" i ustawiany wewnątrz metody Game.TryMove
 						break;
 
 					case "undo":
 					case "u":
-						if (!game.UndoLastMove()) {
-							// Komunikat o błędzie jest już wyświetlany w UndoLastMove
-							game.Pause();
-						}
+						if (!game.UndoLastMove()) game.Pause(); // Komunikat o błędzie jest już wyświetlany w UndoLastMove
 						break;
 
 					case "score":
@@ -106,13 +93,11 @@ namespace SolitaireConsole.Input {
 
 					default:
 						Console.WriteLine("Nieznana komenda.");
-						game.Pause();
+						game.Pause(); // Consider if this should set an error too.
 						break;
 				}
 			} catch (Exception ex) {
-				Console.WriteLine($"\nWystąpił nieoczekiwany błąd: {ex.Message}");
-				Console.WriteLine("Spróbuj ponownie lub uruchom grę od nowa.");
-				game.Pause();
+				game.SetLastMoveError($"Wystąpił nieoczekiwany błąd: {ex.Message}");
 			}
 		}
 

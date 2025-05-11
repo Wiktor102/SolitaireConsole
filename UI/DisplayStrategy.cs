@@ -106,6 +106,13 @@ namespace SolitaireConsole.UI {
 			DisplayPiles([.. game.Tableaux.Cast<CardPile>()]);
 			if (_context != null) DisplayTableauSelectionIndicator();
 			Console.WriteLine("\n" + new string('-', Console.WindowWidth > 0 ? Console.WindowWidth - 1 : 80)); // Linia oddzielająca
+
+			if (!string.IsNullOrEmpty(game.LastMoveError)) {
+				Console.ForegroundColor = ConsoleColor.Red;
+				Console.WriteLine($"Błąd: {game.LastMoveError}");
+				Console.ResetColor();
+				game.ClearLastMoveError(); // Usuń błąd po jego wyswietleniu
+			}
 		}
 
 		private void DisplayPiles(List<CardPile> piles) {

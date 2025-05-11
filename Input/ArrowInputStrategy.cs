@@ -26,13 +26,20 @@ namespace SolitaireConsole.Input {
 				case ConsoleKey.Escape:
 					Escape();
 					break;
+				case ConsoleKey.Q: // Added for consistency with text mode
+					Console.Write("Czy na pewno chcesz zakończyć grę? (t/n): ");
+					if (Console.ReadKey().KeyChar == 't' || Console.ReadKey().KeyChar == 'T') {
+						indicateGameEnd(GameResult.Quit);
+					}
+					break;
 				default:
-					Console.WriteLine("Invalid key pressed.");
 					break;
 			}
 		}
 
 		private void Enter() {
+			game.ClearLastMoveError(); // Wyczyść błędy przed wykonaniem ruchu
+
 			if (_context.SelectedArea == PileType.Tableau) {
 				TableauPile tableau = game.Tableaux[_context.SelectedTableauIndex!.Value];
 				Card selectedCard = tableau.Cards[_context.SelectedCardIndex];
@@ -47,8 +54,6 @@ namespace SolitaireConsole.Input {
 
 					if (game.TryMove(PileType.Tableau, scrcIndex, PileType.Tableau, destIndex, selectedCardSequence.Count)) {
 						RevalidateTableauSelection();
-					} else {
-						game.Pause();
 					}
 
 					return;
@@ -58,42 +63,32 @@ namespace SolitaireConsole.Input {
 				FoundationPile potentialFoundation = FoundationPile.GetPileForSuit(game.Foundations, selectedCard.Suit, out var i);
 
 				if (selectedCardSequence.Count == 1 && potentialFoundation.CanAddCard(selectedCard)) { // TODO: To jest niezaimplementowane przy trybie tekstowym -> będzie refactor
-					if (game.TryMove(PileType.Tableau, _context.SelectedTableauIndex!.Value, PileType.Foundation, i, 1)) {
-						RevalidateTableauSelection();
-					} else {
-						game.Pause();
-					}
-
+					game.TryMove(PileType.Tableau, _context.SelectedTableauIndex!.Value, PileType.Foundation, i, 1);
+					RevalidateTableauSelection();
 					return;
 				}
 
 				_context.SelectedDestTableauIndex = 0;
 			} else if (_context.SelectedArea == PileType.Stock) {
-				game.DrawFromStock();
+				game.DrawFromStock(); // TODO: Error message for DrawFromStock is handled internally or via LastMoveError
 			} else if (_context.SelectedArea == PileType.Waste) {
 				if (_context.SelectingDestiantionOnTableau) {
 					int destIndex = _context.SelectedDestTableauIndex!.Value;
 					_context.SelectedDestTableauIndex = null;
 
-					if (game.TryMove(PileType.Waste, 0, PileType.Tableau, destIndex, 1)) {
-						RevalidateWasteSelection();
-					} else {
-						game.Pause();
-					}
-
+					if (game.TryMove(PileType.Waste, 0, PileType.Tableau, destIndex, 1)) RevalidateWasteSelection();
 					return;
 				}
 
-				Card selectedCard = game.Waste.PeekTopCard()!;
-				FoundationPile potentialFoundation = FoundationPile.GetPileForSuit(game.Foundations, selectedCard.Suit, out var i);
-				if (potentialFoundation.CanAddCard(selectedCard)) { // TODO: To jest niezaimplementowane przy trybie tekstowym -> będzie refactor
-					if (game.TryMove(PileType.Waste, 0, PileType.Foundation, i, 1)) {
-						RevalidateWasteSelection();
-					} else {
-						game.Pause();
+				Card? wasteTopCard = game.Waste.PeekTopCard();
+				if (wasteTopCard != null) {
+					FoundationPile potentialFoundation = FoundationPile.GetPileForSuit(game.Foundations, wasteTopCard.Suit, out var i);
+					if (potentialFoundation.CanAddCard(wasteTopCard)) {
+						if (game.TryMove(PileType.Waste, 0, PileType.Foundation, i, 1)) RevalidateWasteSelection();
+						return;
 					}
-
-					return;
+				} else {
+					game.SetLastMoveError("Stos kart odrzuconych jest pusty.");
 				}
 
 				_context.SelectedDestTableauIndex = 0;

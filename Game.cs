@@ -19,6 +19,9 @@ namespace SolitaireConsole {
 		private readonly HighScoreManager _highScoreManager; // Zarządzanie najlepszymi wynikami
 
 		private readonly InteractionMode _interactionMode;
+		private readonly MoveService _moveService;
+
+		public string? LastMoveError { get; private set; }
 
 		public Game(DifficultyLevel difficulty) {
 			Difficulty = difficulty;
@@ -30,6 +33,7 @@ namespace SolitaireConsole {
 			MovesCount = 0;
 			_highScoreManager = new HighScoreManager("highscores.txt");
 			_interactionMode = new ArrowInteractionMode(this);
+			_moveService = new MoveService(this);
 
 			// Initialize empty Foundation and Tableau piles
 			foreach (Suit suit in Enum.GetValues<Suit>()) Foundations.Add(new FoundationPile(suit));
@@ -91,114 +95,11 @@ namespace SolitaireConsole {
 
 		// Metoda do próby przeniesienia karty lub sekwencji kart
 		public bool TryMove(PileType sourceType, int sourceIndex, PileType destType, int destIndex, int cardCount = 1) {
-			CardPile? sourcePile = GetPile(sourceType, sourceIndex);
-			CardPile? destPile = GetPile(destType, destIndex);
-
-			if (sourcePile == null || destPile == null || sourcePile == destPile) {
-				Console.WriteLine("Błąd: Nieprawidłowe stosy źródłowe lub docelowe.");
-				return false;
-			}
-
-			List<Card> cardsToMove = [];
-			bool wasSourceTopFlipped = false;
-			bool wasDestFoundationSuitSet = false;
-
-			// --- Logika przenoszenia ---
-
-			// 1. Z Waste do Foundation lub Tableau
-			if (sourceType == PileType.Waste) {
-				if (cardCount != 1) { Console.WriteLine("Błąd: Można przenieść tylko jedną kartę ze stosu odrzuconych."); return false; }
-				Card? card = Waste.PeekTopCard(); // Zawsze wierzchnia
-				if (card == null) { Console.WriteLine("Błąd: Stos odrzuconych jest pusty."); return false; }
-
-				if (destPile.CanAddCard(card)) {
-					cardsToMove.Add(card); // Dodajemy kartę do listy przenoszonych
-					Waste.RemoveTopCard(); // Usuwamy ją z Waste
-				} else {
-					Console.WriteLine("Błąd: Nie można przenieść tej karty na wybrany stos docelowy.");
-					return false;
-				}
-			}
-			// 2. Z Tableau do Foundation lub innego Tableau
-			else if (sourceType == PileType.Tableau) {
-				TableauPile sourceTableau = (TableauPile)sourcePile;
-				if (sourceTableau.IsEmpty) { Console.WriteLine("Błąd: Kolumna źródłowa jest pusta."); return false; }
-
-				// Sprawdź, czy żądana liczba kart jest poprawna i czy są odkryte
-				if (cardCount <= 0 || cardCount > sourceTableau.Count) { Console.WriteLine("Błąd: Nieprawidłowa liczba kart do przeniesienia."); return false; }
-
-				int firstCardIndex = sourceTableau.Count - cardCount;
-				if (firstCardIndex < 0) { Console.WriteLine("Błąd: Nie można przenieść tylu kart."); return false; } // Dodatkowe zabezpieczenie
-
-				Card firstCardToMove = sourceTableau.GetCardsForDisplay()[firstCardIndex];
-				if (!firstCardToMove.IsFaceUp) { Console.WriteLine("Błąd: Nie można przenieść zakrytej karty lub sekwencji zaczynającej się od zakrytej karty."); return false; }
-
-				// Pobierz sekwencję do przeniesienia
-				List<Card> sequence = sourceTableau.GetFaceUpSequence(firstCardIndex);
-				if (sequence.Count != cardCount) { Console.WriteLine("Błąd wewnętrzny: Niezgodność liczby kart w sekwencji."); return false; } // Sanity check
-
-
-				// 2a. Przenoszenie do Foundation (tylko pojedyncza karta)
-				if (destType == PileType.Foundation) {
-					if (cardCount != 1) { Console.WriteLine("Błąd: Można przenieść tylko jedną kartę na stos końcowy."); return false; }
-					if (destPile.CanAddCard(firstCardToMove)) {
-						cardsToMove = sourceTableau.RemoveSequence(firstCardIndex); // Usuń kartę z Tableau
-																					// Sprawdź, czy trzeba odkryć kartę pod spodem
-						wasSourceTopFlipped = sourceTableau.FlipTopCardIfNecessary();
-						// Sprawdź, czy ustawiono kolor stosu Foundation
-						if (destPile.IsEmpty && firstCardToMove.Rank == Rank.Ace) {
-							wasDestFoundationSuitSet = true;
-						}
-					} else { Console.WriteLine("Błąd: Nie można przenieść tej karty na wybrany stos końcowy."); return false; }
-				}
-				// 2b. Przenoszenie do innego Tableau
-				else if (destType == PileType.Tableau) {
-					TableauPile destTableau = (TableauPile)destPile;
-					if (destTableau.CanAddSequence(sequence)) // Używamy CanAddSequence
-					{
-						cardsToMove = sourceTableau.RemoveSequence(firstCardIndex); // Usuń sekwencję z Tableau
-																					// Sprawdź, czy trzeba odkryć kartę pod spodem w źródłowym Tableau
-						wasSourceTopFlipped = sourceTableau.FlipTopCardIfNecessary();
-					} else { Console.WriteLine("Błąd: Nie można przenieść tej sekwencji na wybraną kolumnę."); return false; }
-				} else {
-					Console.WriteLine("Błąd: Nieprawidłowy cel dla ruchu z kolumny Tableau."); return false;
-				}
-			}
-			// 3. Z Foundation do Tableau (rzadko używane, ale czasem potrzebne)
-			else if (sourceType == PileType.Foundation) {
-				if (destType != PileType.Tableau) { Console.WriteLine("Błąd: Kartę ze stosu końcowego można przenieść tylko do kolumny gry."); return false; }
-				if (cardCount != 1) { Console.WriteLine("Błąd: Można przenieść tylko jedną kartę ze stosu końcowego."); return false; }
-
-				FoundationPile sourceFoundation = (FoundationPile)sourcePile;
-				Card? card = sourceFoundation.PeekTopCard();
-				if (card == null) { Console.WriteLine("Błąd: Stos końcowy źródłowy jest pusty."); return false; }
-
-				TableauPile destTableau = (TableauPile)destPile;
-				if (destTableau.CanAddCard(card)) {
-					cardsToMove.Add(sourceFoundation.RemoveTopCard()!); // Usuwamy kartę z Foundation
-				} else {
-					Console.WriteLine("Błąd: Nie można przenieść tej karty na wybraną kolumnę.");
-					return false;
-				}
-			} else {
-				Console.WriteLine("Błąd: Nieprawidłowy stos źródłowy.");
-				return false;
-			}
-
-			// --- Finalizacja ruchu ---
-			if (cardsToMove.Count > 0) {
-				// Zapisz ruch do historii PRZED wykonaniem
-				var moveRecord = new MoveRecord(sourceType, sourceIndex, destType, destIndex, [.. cardsToMove], wasSourceTopFlipped, wasDestFoundationSuitSet);
-				if (_moveHistory.Count >= MaxUndoSteps) _moveHistory.Pop(); // Usuń najstarszy ruch
-				_moveHistory.Push(moveRecord);
-
-				// Dodaj przeniesione karty do stosu docelowego
-				destPile.AddCards(cardsToMove);
-				MovesCount++; // Zwiększ licznik ruchów
-				return true; // Ruch wykonany pomyślnie
-			} else {
-				// To nie powinno się zdarzyć, jeśli logika powyżej jest poprawna
-				Console.WriteLine("Błąd wewnętrzny: Nie znaleziono kart do przeniesienia.");
+			ClearLastMoveError();
+			try {
+				return _moveService.TryMove(sourceType, sourceIndex, destType, destIndex, cardCount);
+			} catch (MoveException ex) {
+				SetLastMoveError(ex.Message);
 				return false;
 			}
 		}
@@ -296,6 +197,17 @@ namespace SolitaireConsole {
 			}
 		}
 
+		// Internal helper for MoveService to add a move record with undo history handling
+		internal void AddMoveRecord(MoveRecord record) {
+			if (_moveHistory.Count >= MaxUndoSteps) _moveHistory.Pop();
+			_moveHistory.Push(record);
+		}
+
+		// Internal helper for MoveService to increment the move counter
+		internal void IncrementMoveCount() {
+			MovesCount++;
+		}
+
 		// Pomocnicza metoda do porównywania list kart (proste porównanie referencji lub wartości)
 		private static bool AreCardListsEqual(List<Card> list1, List<Card> list2) {
 			if (list1.Count != list2.Count) return false;
@@ -384,6 +296,14 @@ namespace SolitaireConsole {
 		public void Pause() {
 			Console.WriteLine("\nNaciśnij Enter, aby kontynuować...");
 			Console.ReadLine();
+		}
+
+		public void ClearLastMoveError() {
+			LastMoveError = null;
+		}
+
+		public void SetLastMoveError(string? errorMessage) {
+			LastMoveError = errorMessage;
 		}
 	}
 
