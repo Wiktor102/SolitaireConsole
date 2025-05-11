@@ -1,6 +1,5 @@
 using SolitaireConsole.CardPiles;
 using SolitaireConsole.InteractionModes;
-using System.Security.AccessControl;
 
 namespace SolitaireConsole.Input {
 	public class ArrowInputStrategy(Game game, ArrowInteractionContext context) : InputStrategy(game) {
@@ -85,11 +84,24 @@ namespace SolitaireConsole.Input {
 					return;
 				}
 
+				Card selectedCard = game.Waste.PeekTopCard()!;
+				FoundationPile potentialFoundation = FoundationPile.GetPileForSuit(game.Foundations, selectedCard.Suit, out var i);
+				if (potentialFoundation.CanAddCard(selectedCard)) { // TODO: To jest niezaimplementowane przy trybie tekstowym -> będzie refactor
+					if (game.TryMove(PileType.Waste, 0, PileType.Foundation, i, 1)) {
+						RevalidateWasteSelection();
+					} else {
+						game.Pause();
+					}
+
+					return;
+				}
+
 				_context.SelectedDestTableauIndex = 0;
 			}
 		}
 
 		private void Escape() {
+			// Sometimes doesn't work?
 			if (_context.SelectingDestiantionOnTableau) {
 				_context.SelectedDestTableauIndex = null;
 				return;
@@ -186,7 +198,8 @@ namespace SolitaireConsole.Input {
 		}
 
 		private bool UpdateTableauCardSelection(int newIndex) {
-			var maxIndex = game.Tableaux[_context.SelectedTableauIndex.Value].Count - 1;
+            if (_context.SelectedArea != PileType.Tableau) return false;
+			var maxIndex = game.Tableaux[_context.SelectedTableauIndex!.Value].Count - 1;
 			var clampedIndex = Math.Clamp(newIndex, 0, maxIndex);
 			bool changed = _context.SelectedCardIndex != clampedIndex;
 			_context.SelectedCardIndex = clampedIndex;
