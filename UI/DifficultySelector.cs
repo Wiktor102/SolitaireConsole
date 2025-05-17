@@ -5,7 +5,7 @@ namespace SolitaireConsole {
 	/// Klasa odpowiedzialna za wyświetlanie menu wyboru poziomu trudności
 	/// </summary>
 	public class DifficultySelector {
-		private readonly Menu<DifficultyLevel?> _menu = new(Menu<int>.GAME_TITLE_HEADING, [
+		private readonly Menu<DifficultyLevel?> _menu = new(Menu<int>.GAME_TITLE_HEADING, ["Wybierz poziom trudności:"], [
 				new("Łatwy (dobieranie 1 karty)", DifficultyLevel.Easy),
 				new("Trudny (dobieranie 3 kart)", DifficultyLevel.Hard),
 				new("Wyjdź", null)

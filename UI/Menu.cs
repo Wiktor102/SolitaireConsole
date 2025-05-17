@@ -14,13 +14,15 @@ namespace SolitaireConsole.UI {
 		];
 
 		protected string[] heading;
+		protected string[] subtitle;
 		protected MenuOption<T>[] options;
 		protected int selectedIndex = 0;
 		private readonly MenuRenderer _renderer = new ConsoleMenuRenderer(); // Kompozycja
 
-		public Menu(string[] heading, MenuOption<T>[] options) {
+		public Menu(string[] heading, string[] subtitle, MenuOption<T>[] options) {
 			if (options.Length < 1) throw new ArgumentException("Menu must have at least one option.");
 			this.heading = heading;
+			this.subtitle = subtitle;
 			this.options = options;
 		}
 
@@ -45,7 +47,7 @@ namespace SolitaireConsole.UI {
 			_renderer.DisplayText(heading);
 			Console.ResetColor();
 			Console.WriteLine();
-			_renderer.DisplayTextLine("Wybierz poziom trudności:");
+			_renderer.DisplayText(subtitle);
 
 			for (int i = 0; i < options.Length; i++) {
 				_renderer.DisplayMenuOption(options[i].Label, i == selectedIndex);
