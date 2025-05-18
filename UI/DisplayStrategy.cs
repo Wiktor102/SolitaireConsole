@@ -46,7 +46,6 @@ namespace SolitaireConsole.UI {
 				new("draw / d", "                       Dobierz kartę ze stosu [S]"),
 				new("move / m <źr> [cel] [liczba]", "   Przenieś kartę/sekwencję (np. m W T2, m T1 F1, m T3 T5 [liczba])"),
 				new("undo / u", "                       Cofnij ostatni ruch (do 3 ruchów)"),
-				new("score / h", "                      Pokaż ranking"),
 				new("restart / r", "                    Rozpocznij nową grę"),
 				new("quit / q", "                       Zakończ grę")
 			];

@@ -13,16 +13,16 @@ namespace SolitaireConsole.UI {
 			@"  \/_/     \/_/\/_/   \/_____/ \/_____/   \/_/\/_/   \/_/ \/_/   \/_____/"
 		];
 
-		protected string[] heading;
-		protected string[] subtitle;
+		public string[] Heading;
+		public string[] Subtitle;
 		protected MenuOption<T>[] options;
 		protected int selectedIndex = 0;
 		private readonly MenuRenderer _renderer = new ConsoleMenuRenderer(); // Kompozycja
 
 		public Menu(string[] heading, string[] subtitle, MenuOption<T>[] options) {
 			if (options.Length < 1) throw new ArgumentException("Menu must have at least one option.");
-			this.heading = heading;
-			this.subtitle = subtitle;
+			this.Heading = heading;
+			this.Subtitle = subtitle;
 			this.options = options;
 		}
 
@@ -44,10 +44,10 @@ namespace SolitaireConsole.UI {
 			Console.Clear();
 
 			Console.ForegroundColor = ConsoleColor.Green;
-			_renderer.DisplayText(heading);
+			_renderer.DisplayText(Heading);
 			Console.ResetColor();
 			Console.WriteLine();
-			_renderer.DisplayText(subtitle);
+			_renderer.DisplayText(Subtitle);
 
 			for (int i = 0; i < options.Length; i++) {
 				_renderer.DisplayMenuOption(options[i].Label, i == selectedIndex);

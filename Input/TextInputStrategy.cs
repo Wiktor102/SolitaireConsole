@@ -86,14 +86,6 @@ namespace SolitaireConsole.Input {
 						game.UndoLastMove(); // Wiadomość o błędzie jest ustawiana w UndoLastMove i wyświetlana przez DisplayStrategy
 						break;
 
-					case "score":
-					case "h":
-						Console.Clear();
-						game.DisplayHighScores();
-						Console.WriteLine("\nNaciśnij Enter, aby wrócić do gry...");
-						Console.ReadLine();
-						break;
-
 					case "restart":
 					case "r":
 						Console.Write("Czy na pewno chcesz rozpocząć nową grę? (t/n): ");

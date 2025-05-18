@@ -1,3 +1,4 @@
+using SolitaireConsole.UI;
 using System.Text;
 
 namespace SolitaireConsole {
@@ -21,9 +22,16 @@ namespace SolitaireConsole {
 
 				// Obsłuż wynik gry
 				switch (result) {
+					case GameResult.ShowWinScreen:
+						var res = new WinScreen(Game.LastMovesCount).Display();
+						if (res == WinScreen.MenuOptions.ShowHighScores) {
+							playAgain = new HighScoreScreen().Display();
+						} else {
+							playAgain = res == WinScreen.MenuOptions.MainMenu;
+						}
+						break;
 					case GameResult.Restart:
-						Console.WriteLine("\nRozpoczynanie nowej gry...");
-						Thread.Sleep(1000);
+						playAgain = true;
 						break;
 					case GameResult.Quit:
 						playAgain = false;

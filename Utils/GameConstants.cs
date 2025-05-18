@@ -1,10 +1,10 @@
 namespace SolitaireConsole {
 	/// <summary>
-	/// Poziom trudnoœci gry
+	/// Poziom trudnoÅ“ci gry
 	/// </summary>
 	public enum DifficultyLevel {
 		/// <summary>
-		/// Tryb ³atwy - dobieranie 1 karty
+		/// Tryb Å‚atwy - dobieranie 1 karty
 		/// </summary>
 		Easy,
 
@@ -15,21 +15,26 @@ namespace SolitaireConsole {
 	}
 
 	/// <summary>
-	/// Enum do sygnalizowania wyniku zakoñczenia gry
+	/// Enum do sygnalizowania wyniku zakoÃ±czenia gry
 	/// </summary>
 	public enum GameResult {
 		/// <summary>
-		/// Kontynuuj grê
+		/// Kontynuuj grÄ™
 		/// </summary>
 		Continue,
 
 		/// <summary>
-		/// Uruchom grê ponownie
+		/// PrzejdÅº do ekranu koÅ„cowego
+		/// </summary>
+		ShowWinScreen,
+
+		/// <summary>
+		/// Uruchom grÄ™ ponownie
 		/// </summary>
 		Restart,
 
 		/// <summary>
-		/// Zakoñcz grê
+		/// ZakoÅ„cz grÄ™
 		/// </summary>
 		Quit
 	}

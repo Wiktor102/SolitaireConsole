@@ -6,6 +6,8 @@ using SolitaireConsole.Utils;
 namespace SolitaireConsole {
 	// Główna klasa zarządzająca logiką gry
 	public class Game {
+		public static int LastMovesCount = 0;
+
 		public StockPile Stock { get; private set; }
 		public WastePile Waste { get; private set; }
 		public List<FoundationPile> Foundations { get; private set; }
@@ -15,8 +17,6 @@ namespace SolitaireConsole {
 
 		private const int MaxUndoSteps = 3; // Maksymalna liczba cofnięć
 		private readonly Stack<MoveRecord> _moveHistory; // Stos do przechowywania historii ruchów
-
-		private readonly HighScoreManager _highScoreManager; // Zarządzanie najlepszymi wynikami
 
 		private readonly InteractionMode _interactionMode;
 		private readonly MoveService _moveService;
@@ -31,7 +31,6 @@ namespace SolitaireConsole {
 			Tableaux = new List<TableauPile>(7);
 			_moveHistory = new Stack<MoveRecord>();
 			MovesCount = 0;
-			_highScoreManager = new HighScoreManager("highscores.txt");
 			_interactionMode = new ArrowInteractionMode(this);
 			_moveService = new MoveService(this);
 
@@ -270,34 +269,6 @@ namespace SolitaireConsole {
 			return Foundations.All(f => f.Count == 13);
 		}
 
-		// Metoda do obsługi zakończenia gry (wygranej)
-		public void HandleWin() {
-			_interactionMode.Display(); // Wyświetl stan gry przed zakończeniem
-			Console.WriteLine("\n*************************************");
-			Console.WriteLine("* Gratulacje! Wygrałeś w Pasjansa! *");
-			Console.WriteLine($"* Ukończyłeś grę w {MovesCount} ruchach.    *");
-			Console.WriteLine("*************************************\n");
-
-			// Zapisz wynik
-			Console.Write("Podaj swoje inicjały (max 3 znaki): ");
-			string initials = Console.ReadLine()?.Trim().ToUpper() ?? "XYZ";
-			if (initials.Length > 3) initials = initials.Substring(0, 3);
-			if (string.IsNullOrWhiteSpace(initials)) initials = "XYZ";
-
-			_highScoreManager.AddScore(initials, MovesCount);
-			Console.WriteLine("\nRanking najlepszych wyników:");
-			_highScoreManager.DisplayScores();
-			Console.WriteLine("\nNaciśnij Enter, aby zakończyć...");
-			Console.ReadLine();
-		}
-
-		// Metoda do wyświetlania rankingu
-		public void DisplayHighScores() {
-			Console.WriteLine("\n--- Ranking Najlepszych Wyników ---");
-			_highScoreManager.DisplayScores();
-			Console.WriteLine("---------------------------------");
-		}
-
 		// Metoda głównej pętli gry
 		public GameResult RunGameLoop() {
 			while (true) {
@@ -305,8 +276,8 @@ namespace SolitaireConsole {
 
 				// Sprawdź warunek zwycięstwa
 				if (CheckWinCondition()) {
-					HandleWin(); // Obsłuż wygraną
-					return GameResult.Continue; // Domyślnie kontynuujemy do menu głównego po wygranej
+					LastMovesCount = MovesCount;
+					return GameResult.ShowWinScreen; // Kontynuujemy do ekranu zwycięstwa
 				}
 
 				// Wyświetl dostępne akcje

@@ -58,19 +58,19 @@ namespace SolitaireConsole {
         }
 
         // Wyświetla ranking w konsoli
-        public void DisplayScores() {
-            if (highScores.Count == 0) {
-                Console.WriteLine("Brak zapisanych wyników.");
-                return;
+        public string[] GetDisplayStrings() {
+			if (highScores.Count == 0) {
+                return ["Brak zapisanych wyników"];
             }
 
-            Console.WriteLine(" # | Inicjały | Ruchy");
-            Console.WriteLine("---|----------|-------");
+			List<string> s = [];
             int rank = 1;
-            foreach (var score in highScores) {
-                Console.WriteLine($"{rank,2} | {score.Name,-8} | {score.Score}");
+            foreach (var (Name, Score) in highScores) {
+				s.Add($"{rank}. {Name,-8}: {Score}");
                 rank++;
             }
+
+			return s.ToArray();
         }
     }
 }
