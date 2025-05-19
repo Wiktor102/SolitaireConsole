@@ -1,7 +1,9 @@
 using SolitaireConsole.CardPiles;
 
 namespace SolitaireConsole.Input {
-	public class TextInputStrategy(Game game) : InputStrategy(game) {
+	public class TextInputStrategy(Game game) : InputStrategy() {
+		public Game Game { get; private set; } = game;
+
 		public override void HandleInput(Action<GameResult> indicateGameEnd) {
 			Console.Write("Wybierz akcję: ");
 			string? input = Console.ReadLine()?.ToLower().Trim(); // Wczytaj i przetwórz komendę użytkownika
@@ -14,7 +16,7 @@ namespace SolitaireConsole.Input {
 				switch (command) { // TODO: Rozdzielić na osobne metody dla kazdej komendy
 					case "draw":
 					case "d":
-						if (!game.DrawFromStock()) {
+						if (!Game.DrawFromStock()) {
 							// TODO:
 							// Error message for DrawFromStock is handled internally or via LastMoveError by DrawFromStock itself if necessary
 							// No specific SetLastMoveError here unless DrawFromStock is changed to throw exceptions too.
@@ -24,7 +26,7 @@ namespace SolitaireConsole.Input {
 					case "move":
 					case "m":
 						if (parts.Length < 2) {
-							game.SetLastMoveError("Nieprawidłowa komenda 'move'. Użycie: move [źródło] ([cel] [liczba_kart - opcjonalnie]). Źródła: W, F1-F4, T1-T7.");
+							Game.SetLastMoveError("Nieprawidłowa komenda 'move'. Użycie: move [źródło] ([cel] [liczba_kart - opcjonalnie]). Źródła: W, F1-F4, T1-T7.");
 							return;
 						}
 
@@ -32,29 +34,29 @@ namespace SolitaireConsole.Input {
 						int sourceIndex = ParsePileString(sourceStr, out PileType sourceType);
 
 						if (sourceIndex == -1 || sourceType == PileType.Stock) { // Nie można ruszać ze Stock bezpośrednio
-							game.SetLastMoveError($"Nieprawidłowe źródło: {sourceStr}");
+							Game.SetLastMoveError($"Nieprawidłowe źródło: {sourceStr}");
 							return;
 						}
 
 						// Sprawdź czy jest to próba automatycznego przeniesienia (podano tylko źródło)
 						if (parts.Length == 2) {
 							if (sourceType == PileType.Tableau || sourceType == PileType.Waste) {
-								if (!game.TryAutoMoveToFoundation(sourceType, sourceIndex)) {
+								if (!Game.TryAutoMoveToFoundation(sourceType, sourceIndex)) {
 									// Wiadomość o błędzie jest ustawiana w TryAutoMoveToFoundation lub w TryMove
 									// Jeśli zwróci false i nie ustawiono błędu, oznacza to, że nie znaleziono poprawnego automatycznego ruchu.
-									if (string.IsNullOrEmpty(game.LastMoveError)) {
-										game.SetLastMoveError("Nie można automatycznie przenieść karty na fundament.");
+									if (string.IsNullOrEmpty(Game.LastMoveError)) {
+										Game.SetLastMoveError("Nie można automatycznie przenieść karty na fundament.");
 									}
 								}
 							} else {
-								game.SetLastMoveError("Automatyczne przenoszenie jest możliwe tylko ze stosów Tableau (T) lub kart odrzuconych (W).");
+								Game.SetLastMoveError("Automatyczne przenoszenie jest możliwe tylko ze stosów Tableau (T) lub kart odrzuconych (W).");
 							}
 							return;
 						}
 
 						// Zwykły ruch z źródła do celu
 						if (parts.Length < 3) {
-							game.SetLastMoveError("Nieprawidłowa komenda 'move'. Musisz podać cel dla tego typu ruchu.");
+							Game.SetLastMoveError("Nieprawidłowa komenda 'move'. Musisz podać cel dla tego typu ruchu.");
 							return;
 						}
 
@@ -64,7 +66,7 @@ namespace SolitaireConsole.Input {
 						// Sprawdź, czy podano liczbę kart (dla ruchu T->T)
 						if (parts.Length > 3) {
 							if (!int.TryParse(parts[3], out cardCount) || cardCount < 1) {
-								game.SetLastMoveError("Nieprawidłowa liczba kart. Musi być dodatnią liczbą całkowitą.");
+								Game.SetLastMoveError("Nieprawidłowa liczba kart. Musi być dodatnią liczbą całkowitą.");
 								return;
 							}
 						}
@@ -73,17 +75,17 @@ namespace SolitaireConsole.Input {
 						PileType destType;
 						int destIndex = ParsePileString(destStr, out destType);
 						if (destIndex == -1 || destType == PileType.Stock || destType == PileType.Waste) { // Nie można ruszać na Stock ani Waste
-							game.SetLastMoveError($"Nieprawidłowy cel: {destStr}");
+							Game.SetLastMoveError($"Nieprawidłowy cel: {destStr}");
 							return;
 						}
 
 						// Wykonaj ruch
-						game.TryMove(sourceType, sourceIndex, destType, destIndex, cardCount); // Błąd jest "łapany" i ustawiany wewnątrz metody Game.TryMove
+						Game.TryMove(sourceType, sourceIndex, destType, destIndex, cardCount); // Błąd jest "łapany" i ustawiany wewnątrz metody Game.TryMove
 						break;
 
 					case "undo":
 					case "u":
-						game.UndoLastMove(); // Wiadomość o błędzie jest ustawiana w UndoLastMove i wyświetlana przez DisplayStrategy
+						Game.UndoLastMove(); // Wiadomość o błędzie jest ustawiana w UndoLastMove i wyświetlana przez DisplayStrategy
 						break;
 
 					case "restart":
@@ -106,11 +108,11 @@ namespace SolitaireConsole.Input {
 
 					default:
 						Console.WriteLine("Nieznana komenda.");
-						game.Pause(); // Consider if this should set an error too.
+						Game.Pause(); // Consider if this should set an error too.
 						break;
 				}
 			} catch (Exception ex) {
-				game.SetLastMoveError($"Wystąpił nieoczekiwany błąd: {ex.Message}");
+				Game.SetLastMoveError($"Wystąpił nieoczekiwany błąd: {ex.Message}");
 			}
 		}
 
@@ -146,6 +148,15 @@ namespace SolitaireConsole.Input {
 				default:
 					return -1; // Nieznany typ stosu
 			}
+		}
+
+		public override ConsoleKeyInfo ReadKey() {
+			// TextInputStrategy doesn't use direct key reads for menu navigation in the same way ArrowInputStrategy does.
+			// This method is primarily for the Menu class when it's configured to use arrow key navigation.
+			// However, to satisfy the abstract class, we can return a default or throw NotImplementedException
+			// if direct key reads are not intended for this strategy outside of Console.ReadLine().
+			// For now, let's return a default value, as Menu might call it.
+			return Console.ReadKey(true);
 		}
 	}
 }

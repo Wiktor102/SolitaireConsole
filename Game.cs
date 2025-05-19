@@ -1,5 +1,6 @@
 using SolitaireConsole.CardPiles;
 using SolitaireConsole.InteractionModes;
+using SolitaireConsole.Input; // Added for GameSettings
 using SolitaireConsole.UI;
 using SolitaireConsole.Utils;
 
@@ -20,18 +21,27 @@ namespace SolitaireConsole {
 
 		private readonly InteractionMode _interactionMode;
 		private readonly MoveService _moveService;
+        private readonly GameSettings _gameSettings; // Added GameSettings field
 
 		public string? LastMoveError { get; private set; }
 
-		public Game(DifficultyLevel difficulty) {
+		public Game(DifficultyLevel difficulty, GameSettings gameSettings) { // Added gameSettings parameter
 			Difficulty = difficulty;
+            _gameSettings = gameSettings; // Assign to field
 			Stock = new StockPile();
 			Waste = new WastePile(difficulty);
 			Foundations = new List<FoundationPile>(4);
 			Tableaux = new List<TableauPile>(7);
 			_moveHistory = new Stack<MoveRecord>();
 			MovesCount = 0;
-			_interactionMode = new ArrowInteractionMode(this);
+
+            // Wybrany tryb sterowania
+            if (_gameSettings.CurrentInputMode == InputMode.Arrow) {
+                _interactionMode = new ArrowInteractionMode(this);
+            } else {
+                _interactionMode = new TextInteractionMode(this);
+            }
+			
 			_moveService = new MoveService(this);
 
 			// Initialize empty Foundation and Tableau piles

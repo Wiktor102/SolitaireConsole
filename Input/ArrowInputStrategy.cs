@@ -2,8 +2,14 @@ using SolitaireConsole.CardPiles;
 using SolitaireConsole.InteractionModes;
 
 namespace SolitaireConsole.Input {
-	public class ArrowInputStrategy(Game game, ArrowInteractionContext context) : InputStrategy(game) {
-		private readonly ArrowInteractionContext _context = context;
+	public class ArrowInputStrategy : InputStrategy, IGameInputStrategy {
+		private readonly ArrowInteractionContext _context;
+		public Game Game { get; private set; }
+
+		public ArrowInputStrategy(Game game, ArrowInteractionContext context) : base() {
+			_context = context;
+			this.Game = game;
+		}
 
 		public override void HandleInput(Action<GameResult> indicateGameEnd) {
 			ConsoleKeyInfo keyInfo = Console.ReadKey(true);
@@ -27,7 +33,7 @@ namespace SolitaireConsole.Input {
 					Escape();
 					break;
 				case ConsoleKey.U:
-					game.UndoLastMove();
+					Game.UndoLastMove();
 					break;
 				case ConsoleKey.Q: // Added for consistency with text mode
 					Console.Write("Czy na pewno chcesz zakończyć grę? (t/n): ");
@@ -40,11 +46,15 @@ namespace SolitaireConsole.Input {
 			}
 		}
 
+		public override ConsoleKeyInfo ReadKey() {
+			return Console.ReadKey(true);
+		}
+
 		private void Enter() {
-			game.ClearLastMoveError(); // Wyczyść błędy przed wykonaniem ruchu
+			Game.ClearLastMoveError(); // Wyczyść błędy przed wykonaniem ruchu
 
 			if (_context.SelectedArea == PileType.Tableau) {
-				TableauPile tableau = game.Tableaux[_context.SelectedTableauIndex!.Value];
+				TableauPile tableau = Game.Tableaux[_context.SelectedTableauIndex!.Value];
 				Card selectedCard = tableau.Cards[_context.SelectedCardIndex];
 				if (!selectedCard.IsFaceUp) return; // Check if the selected card is face up before allowing any move
 
@@ -55,14 +65,14 @@ namespace SolitaireConsole.Input {
 
 					// Determine card count for T->T move based on selected card index
 					List<Card> selectedCardSequence = tableau.Cards[_context.SelectedCardIndex..];
-					if (game.TryMove(PileType.Tableau, scrcIndex, PileType.Tableau, destIndex, selectedCardSequence.Count)) {
+					if (Game.TryMove(PileType.Tableau, scrcIndex, PileType.Tableau, destIndex, selectedCardSequence.Count)) {
 						RevalidateTableauSelection();
 					}
 					return;
 				}
 
 				// Attempt auto-move to foundation
-				if (game.TryAutoMoveToFoundation(PileType.Tableau, _context.SelectedTableauIndex!.Value)) {
+				if (Game.TryAutoMoveToFoundation(PileType.Tableau, _context.SelectedTableauIndex!.Value)) {
 					RevalidateTableauSelection();
 					return;
 				}
@@ -71,24 +81,24 @@ namespace SolitaireConsole.Input {
 				// initiate selection for T->T move.
 				_context.SelectedDestTableauIndex = 0;
 			} else if (_context.SelectedArea == PileType.Stock) {
-				game.DrawFromStock(); // TODO: Error message for DrawFromStock is handled internally or via LastMoveError
+				Game.DrawFromStock(); // TODO: Error message for DrawFromStock is handled internally or via LastMoveError
 			} else if (_context.SelectedArea == PileType.Waste) {
 				if (_context.SelectingDestiantionOnTableau) {
 					int destIndex = _context.SelectedDestTableauIndex!.Value;
 					_context.SelectedDestTableauIndex = null;
 
-					if (game.TryMove(PileType.Waste, 0, PileType.Tableau, destIndex, 1)) RevalidateWasteSelection();
+					if (Game.TryMove(PileType.Waste, 0, PileType.Tableau, destIndex, 1)) RevalidateWasteSelection();
 					return;
 				}
 
-				if (game.TryAutoMoveToFoundation(PileType.Waste, 0)) {
+				if (Game.TryAutoMoveToFoundation(PileType.Waste, 0)) {
 					RevalidateWasteSelection();
 					return;
 				}
 
-				Card? wasteTopCard = game.Waste.PeekTopCard();
+				Card? wasteTopCard = Game.Waste.PeekTopCard();
 				if (wasteTopCard == null) {
-					game.SetLastMoveError("Stos kart odrzuconych jest pusty.");
+					Game.SetLastMoveError("Stos kart odrzuconych jest pusty.");
 					return;
 				}
 
@@ -113,11 +123,11 @@ namespace SolitaireConsole.Input {
 			if (_context.SelectedArea == PileType.Tableau) {
 				UpdateTableauSelection(1);
 			} else if (_context.SelectedArea == PileType.Stock) {
-				int wasteCount = game.Waste.Cards.Count;
+				int wasteCount = Game.Waste.Cards.Count;
 				if (wasteCount == 0) return;
 
 				_context.SelectedArea = PileType.Waste;
-				_context.SelectedCardIndex = game.Difficulty == DifficultyLevel.Hard ? 2 : 0; // W trybie trudnym wierzchnia karta wyświetlana jest jako trzecia
+				_context.SelectedCardIndex = Game.Difficulty == DifficultyLevel.Hard ? 2 : 0; // W trybie trudnym wierzchnia karta wyświetlana jest jako trzecia
 			}
 		}
 
@@ -141,10 +151,10 @@ namespace SolitaireConsole.Input {
 				if (_context.SelectedCardIndex == 0) {
 					_context.SelectedArea = _context.SelectedTableauIndex!.Value switch {
 						0 or 1 or 2 or 3 => PileType.Stock,
-						_ => game.Waste.Cards.Count > 0 ? PileType.Waste : PileType.Stock
+						_ => Game.Waste.Cards.Count > 0 ? PileType.Waste : PileType.Stock
 					};
 
-					_context.SelectedCardIndex = _context.SelectedArea == PileType.Waste && game.Difficulty == DifficultyLevel.Hard ? 2 : 0;
+					_context.SelectedCardIndex = _context.SelectedArea == PileType.Waste && Game.Difficulty == DifficultyLevel.Hard ? 2 : 0;
 					return;
 				}
 
@@ -188,14 +198,14 @@ namespace SolitaireConsole.Input {
 			while (true) {
 				int nextIndex = index + direction;
 				if (nextIndex < 0 || nextIndex > 6) return currentIndex;
-				if (!game.Tableaux[nextIndex].IsEmpty) return nextIndex;
+				if (!Game.Tableaux[nextIndex].IsEmpty) return nextIndex;
 				index = nextIndex;
 			}
 		}
 
 		private bool UpdateTableauCardSelection(int newIndex) {
 			if (_context.SelectedArea != PileType.Tableau) return false;
-			var maxIndex = game.Tableaux[_context.SelectedTableauIndex!.Value].Count - 1;
+			var maxIndex = Game.Tableaux[_context.SelectedTableauIndex!.Value].Count - 1;
 			var clampedIndex = Math.Clamp(newIndex, 0, maxIndex);
 			bool changed = _context.SelectedCardIndex != clampedIndex;
 			_context.SelectedCardIndex = clampedIndex;
@@ -204,7 +214,7 @@ namespace SolitaireConsole.Input {
 
 		private void RevalidateTableauSelection() {
 			if (_context.SelectedArea != PileType.Tableau) return;
-			if (!game.Tableaux[_context.SelectedTableauIndex!.Value].IsEmpty) {
+			if (!Game.Tableaux[_context.SelectedTableauIndex!.Value].IsEmpty) {
 				// jeśli wybrany stos nie jest jeszcze pusty, to tylko zmieniamy wybraną kartę na tą wyżej
 				UpdateTableauCardSelection(_context.SelectedCardIndex - 1);
 				return;
@@ -215,14 +225,14 @@ namespace SolitaireConsole.Input {
 			bool found = false;
 
 			// Szukanie najbliższej niepustej tali kart
-			for (int offset = 1; offset < game.Tableaux.Count && !found; offset++) {
+			for (int offset = 1; offset < Game.Tableaux.Count && !found; offset++) {
 				int left = currentIndex - offset;
 				int right = currentIndex + offset;
 
-				if (left >= 0 && !game.Tableaux[left].IsEmpty) {
+				if (left >= 0 && !Game.Tableaux[left].IsEmpty) {
 					nearestIndex = left;
 					found = true;
-				} else if (right < game.Tableaux.Count && !game.Tableaux[right].IsEmpty) {
+				} else if (right < Game.Tableaux.Count && !Game.Tableaux[right].IsEmpty) {
 					nearestIndex = right;
 					found = true;
 				}
@@ -234,7 +244,7 @@ namespace SolitaireConsole.Input {
 
 		private void RevalidateWasteSelection() {
 			if (_context.SelectedArea != PileType.Waste) return;
-			if (game.Waste.IsEmpty) {
+			if (Game.Waste.IsEmpty) {
 				_context.SelectedArea = PileType.Stock;
 				_context.SelectedCardIndex = 0;
 				return;

@@ -9,15 +9,20 @@ namespace SolitaireConsole {
 			Console.OutputEncoding = Encoding.UTF8; // Ważne dla polskich znaków i symboli kart
 
 			bool playAgain = true;
+            GameSettings gameSettings = new GameSettings();
 			while (playAgain) {
-				var difficultySelector = new DifficultySelector();
-				DifficultyLevel? difficulty = difficultySelector.ChooseDifficulty();
-				if (!difficulty.HasValue) {
-					playAgain = false;
-					continue;
-				}
+				var difficultySelector = new DifficultySelector(gameSettings);
+                MainMenuAction mainMenuAction = difficultySelector.ShowMainMenu();
 
-				Game game = new(difficulty.Value); // Rozpocznij nową grę
+                if (mainMenuAction == MainMenuAction.Exit) {
+                    playAgain = false;
+                    continue;
+                }
+
+                DifficultyLevel? difficulty = difficultySelector.ChooseDifficulty();
+				if (!difficulty.HasValue) continue;
+
+				Game game = new(difficulty.Value, gameSettings); // Rozpocznij nową grę, passing gameSettings
 				GameResult result = game.RunGameLoop(); // Uruchom główną pętlę gry
 
 				// Obsłuż wynik gry

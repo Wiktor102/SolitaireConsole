@@ -1,9 +1,7 @@
-namespace SolitaireConsole.UI {
-	public class MenuOption<T>(string label, T value) {
-		public readonly string Label = label;
-		public readonly T Value = value;
-	}
+using SolitaireConsole.Input;
+using SolitaireConsole.UI;
 
+namespace SolitaireConsole.UI {
 	public class Menu<T> {
 		public static readonly string[] GAME_TITLE_HEADING = [
 			@" ______   ______     ______       __     ______     __   __     ______   ",
@@ -31,11 +29,19 @@ namespace SolitaireConsole.UI {
 
 			do {
 				Display();
-				key = Console.ReadKey(true); // true - nie wyświetlaj wciśniętego klawisza
-				HandleKeyInput(key);
+				key = Console.ReadKey(true);
 
-				if (key.Key == ConsoleKey.Enter) {
-					return options[selectedIndex].Value;
+				switch (key.Key) {
+					case ConsoleKey.UpArrow:
+						UpdateSelectedIndex(-1);
+						break;
+					case ConsoleKey.DownArrow:
+						UpdateSelectedIndex(1);
+						break;
+					case ConsoleKey.Enter:
+						return options[selectedIndex].Value;
+					default:
+                        break;
 				}
 			} while (true);
 		}
@@ -54,17 +60,6 @@ namespace SolitaireConsole.UI {
 			}
 
 			_renderer.DisplayDividerLine();
-		}
-
-		private void HandleKeyInput(ConsoleKeyInfo key) {
-			switch (key.Key) {
-				case ConsoleKey.UpArrow:
-					UpdateSelectedIndex(-1);
-					break;
-				case ConsoleKey.DownArrow:
-					UpdateSelectedIndex(1);
-					break;
-			}
 		}
 
 		private void UpdateSelectedIndex(int direction) {
