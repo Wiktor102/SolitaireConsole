@@ -71,17 +71,17 @@ namespace SolitaireConsole.UI {
 
 				// Up Arrow Key Actions
 				new("↑", "Wybierz kartę wyżej",
-					(g, ctx) => ctx != null && ctx.SelectedArea == PileType.Tableau && ctx.SelectedCardIndex > 0),
+					(g, ctx) => ctx != null && ctx.SelectedArea == PileType.Tableau && ctx.SelectedCardIndex > 0 && !ctx.SelectingDestiantionOnTableau),
 				new("↑", "Przejdź do stosu rezerwowego",
-					(g, ctx) => ctx != null && ctx.SelectedArea == PileType.Tableau && ctx.SelectedCardIndex <= 3),
+					(g, ctx) => ctx != null && ctx.SelectedArea == PileType.Tableau && (ctx.SelectedTableauIndex <= 3 || g.Waste.IsEmpty) &&  ctx.SelectedCardIndex == 0 && !ctx.SelectingDestiantionOnTableau),
 				new("↑", "Przejdź do stosu kart odrzuconych",
-					(g, ctx) => ctx != null && ctx.SelectedArea == PileType.Tableau && ctx.SelectedCardIndex > 3 && !g.Waste.IsEmpty),
+					(g, ctx) => ctx != null && ctx.SelectedArea == PileType.Tableau && ctx.SelectedTableauIndex > 3 && ctx.SelectedCardIndex == 0 && !ctx.SelectingDestiantionOnTableau && !g.Waste.IsEmpty),
 
 				// Down Arrow Key Actions
 				new("↓", "Wybierz kartę niżej",
-					(g, ctx) => ctx != null && ctx.SelectedArea == PileType.Tableau && ctx.SelectedCardIndex < g.Tableaux[ctx.SelectedTableauIndex!.Value].Count - 1),
+					(g, ctx) => ctx != null && ctx.SelectedArea == PileType.Tableau && !ctx.SelectingDestiantionOnTableau && ctx.SelectedCardIndex < g.Tableaux[ctx.SelectedTableauIndex!.Value].Count - 1),
 				new("↓", "Przejdź do Kolumn Gry",
-					(g, ctx) => ctx != null && (ctx.SelectedArea == PileType.Stock || ctx.SelectedArea == PileType.Waste)),
+					(g, ctx) => ctx != null && !ctx.SelectingDestiantionOnTableau && (ctx.SelectedArea == PileType.Stock || ctx.SelectedArea == PileType.Waste)),
 
 				// Left Arrow Key Actions
 				new("←", "Wybierz cel na kolumnie po lewej",

@@ -136,6 +136,7 @@ namespace SolitaireConsole.Input {
 		}
 
 		private void MoveUp() {
+			if (_context.SelectingDestiantionOnTableau) return;
 			if (_context.SelectedArea == PileType.Tableau) {
 				if (_context.SelectedCardIndex == 0) {
 					_context.SelectedArea = _context.SelectedTableauIndex!.Value switch {
@@ -152,17 +153,23 @@ namespace SolitaireConsole.Input {
 		}
 
 		private void MoveDown() {
+			if (_context.SelectingDestiantionOnTableau) return;
 			if (_context.SelectedArea == PileType.Tableau) {
 				UpdateTableauCardSelection(_context.SelectedCardIndex + 1);
 			} else {
+				_context.SelectedArea = PileType.Tableau;
 				_context.SelectedCardIndex = 0;
-				_context.SelectedTableauIndex = _context.SelectedArea switch {
+
+				// First get the target tableau index based on current area
+				int targetIndex = _context.SelectedArea switch {
 					PileType.Stock => 2,
 					PileType.Waste => Math.Min(4 + _context.SelectedCardIndex, 6),
-					PileType.Foundation => 6, // Foundation nigdy nie może być wybrany -> tylko dla kopilatora
-					_ => 0 // Tylko dla kopilatora
+					PileType.Foundation => 6,
+					_ => 0
 				};
-				_context.SelectedArea = PileType.Tableau;
+
+				// Find nearest non-empty tableau pile
+				_context.SelectedTableauIndex = FindNextNonEmptyTableau(targetIndex, 0);
 			}
 		}
 
