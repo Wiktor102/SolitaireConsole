@@ -53,17 +53,23 @@ namespace SolitaireConsole.UI {
 
 		public DisplayStrategy(Game game, ArrowInteractionContext context) : this(game) {
 			_context = context;
-			actionHints = new List<InputActionHint> {
+			actionHints = [
 				// Enter Key Actions
 				new("Enter",
 					(g, ctx) => ctx != null && ctx.SelectedDestTableauIndex.HasValue ? $"Potwierdź przeniesienie na kolumnę [T{ctx.SelectedDestTableauIndex.Value + 1}]" : "Potwierdź przeniesienie",
 					(g, ctx) => ctx != null && ctx.SelectingDestiantionOnTableau && (ctx.SelectedArea == PileType.Tableau || ctx.SelectedArea == PileType.Waste)),
-				new("Enter", "Przenieś na stos końcowy / Wybierz cel na kolumnie",
+				new("Enter", $"{(game.GameSettings.AutoMoveToFoundation ? "Przenieś na stos końcowy / " : "")}Wybierz cel na kolumnie",
 					(g, ctx) => ctx != null && ctx.SelectedArea == PileType.Tableau && !ctx.SelectingDestiantionOnTableau && ctx.IsSelectedCardInTableauFaceUp(g)),
-				new("Enter", "Przenieś na stos końcowy / Wybierz cel na kolumnie",
+				new("Enter", $"{(game.GameSettings.AutoMoveToFoundation ? "Przenieś na stos końcowy / " : "")}Wybierz cel na kolumnie",
 					(g, ctx) => ctx != null && ctx.SelectedArea == PileType.Waste && !ctx.SelectingDestiantionOnTableau && !g.Waste.IsEmpty),
 				new("Enter", "Dobierz karty",
 					(g, ctx) => ctx != null && ctx.SelectedArea == PileType.Stock && g.CanDrawFromStock()),
+
+				// Ctrl+Enter Key Actions
+				new("Ctrl+Enter", "Spróbuj przenieść na stos końcowy",
+					(g, ctx) => ctx != null && !ctx.SelectingDestiantionOnTableau &&
+						((ctx.SelectedArea == PileType.Tableau && ctx.IsSelectedCardInTableauFaceUp(g)) ||
+						 (ctx.SelectedArea == PileType.Waste && !g.Waste.IsEmpty))),
 
 				// Escape Key Actions
 				new("Esc", "Anuluj wybór celu",
@@ -103,7 +109,7 @@ namespace SolitaireConsole.UI {
 				new("u", "Cofnij ostatni ruch", (g, ctx) => ctx != null && g.CanUndoLastMove()),
 				new("l", "Pokaż ranking", (g, ctx) => true),
 				new("q", "Zakończ grę / rozpocznij od nowa", (g, ctx) => true)
-			};
+			];
 		}
 
 		public abstract void Display();

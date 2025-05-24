@@ -1,12 +1,15 @@
 using SolitaireConsole.CardPiles;
 using SolitaireConsole.Utils;
+using SolitaireConsole.UI;
 
 namespace SolitaireConsole {
 	internal class MoveService {
 		private readonly Game _game;
+		private readonly GameSettings _gameSettings;
 
-		public MoveService(Game game) {
+		public MoveService(Game game, GameSettings gameSettings) {
 			_game = game;
+			_gameSettings = gameSettings;
 		}
 
 		public bool TryMove(PileType sourceType, int sourceIndex, PileType destType, int destIndex, int cardCount = 1) {
@@ -42,36 +45,40 @@ namespace SolitaireConsole {
 		}
 
 		public bool TryAutoMoveToFoundation(PileType sourceType, int sourceIndex) {
-			var sourcePile = GetPile(sourceType, sourceIndex);
-			if (sourcePile == null || sourcePile.IsEmpty) {
-				return false; // Source pile invalid or empty
-			}
+			if (!_gameSettings.AutoMoveToFoundation) return false; // Sprawdź czy automatyczne przenoszenie jest włączone
+			return TryManualMoveToFoundation(sourceType, sourceIndex);
+		}
 
-			Card? cardToConsiderForAutoMove;
+		// Manual move to foundation that bypasses the AutoMoveToFoundation setting
+		public bool TryManualMoveToFoundation(PileType sourceType, int sourceIndex) {
+			var sourcePile = GetPile(sourceType, sourceIndex);
+			if (sourcePile == null || sourcePile.IsEmpty) return false; // Stos źródłowy nie istnieje lub jest pusty
+
+			Card? cardToConsiderForMove;
 
 			if (sourceType == PileType.Tableau) {
 				if (sourcePile is TableauPile tableauPile) {
-					cardToConsiderForAutoMove = tableauPile.Cards.LastOrDefault();
-					// Pre-check: card must exist and be face up for auto-move consideration
-					if (cardToConsiderForAutoMove == null || !cardToConsiderForAutoMove.IsFaceUp) {
+					cardToConsiderForMove = tableauPile.Cards.LastOrDefault();
+					// Pre-check: card must exist and be face up for move consideration
+					if (cardToConsiderForMove == null || !cardToConsiderForMove.IsFaceUp) {
 						return false;
 					}
 				} else {
 					return false; // Should not happen if GetPile is correct
 				}
 			} else if (sourceType == PileType.Waste) {
-				cardToConsiderForAutoMove = sourcePile.PeekTopCard();
-				if (cardToConsiderForAutoMove == null) {
+				cardToConsiderForMove = sourcePile.PeekTopCard();
+				if (cardToConsiderForMove == null) {
 					return false; // Waste pile is empty
 				}
 			} else {
-				return false; // Auto-move is primarily for Tableau and Waste
+				return false; // Manual move is primarily for Tableau and Waste
 			}
 
 			// Find a suitable foundation
 			for (int i = 0; i < _game.Foundations.Count; i++) {
 				var foundationPile = _game.Foundations[i];
-				if (foundationPile.CanAddCard(cardToConsiderForAutoMove)) {
+				if (foundationPile.CanAddCard(cardToConsiderForMove)) {
 					// Attempt the move. TryMove will handle detailed validation,
 					// including the IsFaceUp check again via ExtractMovedCards for Tableau.
 					return TryMove(sourceType, sourceIndex, PileType.Foundation, i, 1);

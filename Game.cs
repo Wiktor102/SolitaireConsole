@@ -21,13 +21,13 @@ namespace SolitaireConsole {
 
 		private readonly InteractionMode _interactionMode;
 		private readonly MoveService _moveService;
-        private readonly GameSettings _gameSettings; // Added GameSettings field
+        public readonly GameSettings GameSettings;
 
 		public string? LastMoveError { get; private set; }
 
 		public Game(DifficultyLevel difficulty, GameSettings gameSettings) { // Added gameSettings parameter
 			Difficulty = difficulty;
-            _gameSettings = gameSettings; // Assign to field
+            GameSettings = gameSettings; // Assign to field
 			Stock = new StockPile();
 			Waste = new WastePile(difficulty);
 			Foundations = new List<FoundationPile>(4);
@@ -36,19 +36,19 @@ namespace SolitaireConsole {
 			MovesCount = 0;
 
             // Wybrany tryb sterowania
-            if (_gameSettings.CurrentInputMode == InputMode.Arrow) {
+            if (GameSettings.CurrentInputMode == InputMode.Arrow) {
                 _interactionMode = new ArrowInteractionMode(this);
             } else {
                 _interactionMode = new TextInteractionMode(this);
             }
 			
-			_moveService = new MoveService(this);
+			_moveService = new MoveService(this, GameSettings);
 
-			// Initialize empty Foundation and Tableau piles
+			// Inicjalizacja stosów końcowych (Foundations) i Tableau
 			foreach (Suit suit in Enum.GetValues<Suit>()) Foundations.Add(new FoundationPile(suit));
 			for (int i = 0; i < 7; i++) Tableaux.Add(new TableauPile());
 
-			// Deal cards to Tableau piles
+			// Rozdaj karty do Tableau
 			for (int i = 0; i < 7; i++) {
 				List<Card> cardsToDeal = Stock.DealInitialTableauCards(i + 1);
 				Tableaux[i].DealInitialCards(cardsToDeal);
@@ -118,6 +118,17 @@ namespace SolitaireConsole {
 			ClearLastMoveError();
 			try {
 				return _moveService.TryAutoMoveToFoundation(sourceType, sourceIndex);
+			} catch (MoveException ex) {
+				SetLastMoveError(ex.Message);
+				return false;
+			}
+		}
+
+		// Metoda do próby ręcznego przeniesienia karty na stos końcowy (Foundation) - pomija ustawienie AutoMoveToFoundation
+		public bool TryManualMoveToFoundation(PileType sourceType, int sourceIndex) {
+			ClearLastMoveError();
+			try {
+				return _moveService.TryManualMoveToFoundation(sourceType, sourceIndex);
 			} catch (MoveException ex) {
 				SetLastMoveError(ex.Message);
 				return false;

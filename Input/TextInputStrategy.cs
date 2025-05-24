@@ -40,16 +40,22 @@ namespace SolitaireConsole.Input {
 
 						// Sprawdź czy jest to próba automatycznego przeniesienia (podano tylko źródło)
 						if (parts.Length == 2) {
-							if (sourceType == PileType.Tableau || sourceType == PileType.Waste) {
-								if (!Game.TryAutoMoveToFoundation(sourceType, sourceIndex)) {
-									// Wiadomość o błędzie jest ustawiana w TryAutoMoveToFoundation lub w TryMove
-									// Jeśli zwróci false i nie ustawiono błędu, oznacza to, że nie znaleziono poprawnego automatycznego ruchu.
-									if (string.IsNullOrEmpty(Game.LastMoveError)) {
-										Game.SetLastMoveError("Nie można automatycznie przenieść karty na fundament.");
-									}
-								}
-							} else {
+							if (!Game.GameSettings.AutoMoveToFoundation) {
+								Game.SetLastMoveError("Automatyczne przenoszenie kart na fundament jest wyłączone. Musisz podać cel dla ruchu ręcznie. Możesz to zmienić w ustawieniach gry.");
+								return; // Automatyczne przenoszenie jest wyłączone
+							}
+
+							if (sourceType != PileType.Tableau && sourceType != PileType.Waste) {
 								Game.SetLastMoveError("Automatyczne przenoszenie jest możliwe tylko ze stosów Tableau (T) lub kart odrzuconych (W).");
+								return;
+							}
+
+							if (Game.TryAutoMoveToFoundation(sourceType, sourceIndex)) return; // Ruch się powiódł
+
+							// Wiadomość o błędzie jest ustawiana w TryAutoMoveToFoundation lub w TryMove
+							// Jeśli zwróci false i nie ustawiono błędu, oznacza to, że nie znaleziono poprawnego automatycznego ruchu.
+							if (string.IsNullOrEmpty(Game.LastMoveError)) {
+								Game.SetLastMoveError("Nie można automatycznie przenieść karty na fundament.");
 							}
 							return;
 						}

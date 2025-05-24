@@ -10,7 +10,6 @@ namespace SolitaireConsole.Input {
 			_context = context;
 			this.Game = game;
 		}
-
 		public override void HandleInput(Action<GameResult> indicateGameEnd) {
 			ConsoleKeyInfo keyInfo = Console.ReadKey(true);
 			switch (keyInfo.Key) {
@@ -27,7 +26,11 @@ namespace SolitaireConsole.Input {
 					MoveRight();
 					break;
 				case ConsoleKey.Enter:
-					Enter();
+					if ((keyInfo.Modifiers & ConsoleModifiers.Control) != 0) {
+						TryMoveToFoundation();
+					} else {
+						Enter();
+					}
 					break;
 				case ConsoleKey.Escape:
 					Escape();
@@ -253,6 +256,33 @@ namespace SolitaireConsole.Input {
 			// Regardless of difficulty, if waste is selected and not empty,
 			// the selected card index should always be 0, representing the single playable card.
 			_context.SelectedCardIndex = 0;
+		}
+
+		private void TryMoveToFoundation() {
+			Game.ClearLastMoveError(); // Wyczyść błędy przed wykonaniem ruchu
+
+			if (_context.SelectedArea == PileType.Tableau) {
+				TableauPile tableau = Game.Tableaux[_context.SelectedTableauIndex!.Value];
+				if (tableau.IsEmpty) return;
+				
+				Card selectedCard = tableau.Cards[_context.SelectedCardIndex];
+				if (!selectedCard.IsFaceUp) return; // Sprawdź, czy wybrana karta jest odkryta przed przeniesieniem
+
+				// Zezwól przeniesienie tylko górnej karty z kolumny Tableau na fundament
+				if (_context.SelectedCardIndex == tableau.Cards.Count - 1) {
+					if (Game.TryManualMoveToFoundation(PileType.Tableau, _context.SelectedTableauIndex!.Value)) {
+						RevalidateTableauSelection();
+					}
+				} else {
+					Game.SetLastMoveError("Można przenieść na fundament tylko wierzchnią kartę z kolumny.");
+				}
+			} else if (_context.SelectedArea == PileType.Waste) {
+				if (Game.TryManualMoveToFoundation(PileType.Waste, 0)) {
+					RevalidateWasteSelection();
+				}
+			} else {
+				Game.SetLastMoveError("Przenoszenie na fundament jest możliwe tylko z kolumn głównych gry (Tableau) lub kart odrzuconych (Waste).");
+			}
 		}
 	}
 }
