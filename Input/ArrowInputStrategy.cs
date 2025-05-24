@@ -144,7 +144,7 @@ namespace SolitaireConsole.Input {
 				UpdateTableauSelection(-1);
 			} else if (_context.SelectedArea == PileType.Waste) {
 				_context.SelectedArea = PileType.Stock;
-				_context.SelectedCardIndex = 0; // Reset card index for stock
+				_context.SelectedCardIndex = 0; // Na stock zawsze wybieramy wierzchnią kartę
 			}
 		}
 
@@ -173,7 +173,7 @@ namespace SolitaireConsole.Input {
 				_context.SelectedArea = PileType.Tableau;
 				_context.SelectedCardIndex = 0;
 
-				// First get the target tableau index based on current area
+				// Najpierw pobierz docelowy indeks tableau na podstawie bieżącego obszaru
 				int targetIndex = _context.SelectedArea switch {
 					PileType.Stock => 2,
 					PileType.Waste => Math.Min(4 + _context.SelectedCardIndex, 6),
@@ -181,8 +181,12 @@ namespace SolitaireConsole.Input {
 					_ => 0
 				};
 
-				// Find nearest non-empty tableau pile
-				_context.SelectedTableauIndex = FindNextNonEmptyTableau(targetIndex, 0);
+				// Znajdź najbliższą niepustą kolumnę tableau - jeśli docelowa jest pusta, najpierw szukaj w prawo, potem w lewo
+				if (targetIndex < Game.Tableaux.Count && !Game.Tableaux[targetIndex].IsEmpty) {
+					_context.SelectedTableauIndex = targetIndex;
+				} else {
+					_context.SelectedTableauIndex = FindNextNonEmptyTableau(targetIndex, 1);
+				}
 			}
 		}
 
@@ -194,16 +198,20 @@ namespace SolitaireConsole.Input {
 			UpdateTableauCardSelection(_context.SelectedCardIndex);
 			return true;
 		}
-
 		private int FindNextNonEmptyTableau(int currentIndex, int direction) {
 			int index = currentIndex;
+			int searchedCount = 0;
 
-			while (true) {
+			while (searchedCount < 7) { // Zapobiega nieskończonej pętli, ograniczając wyszukiwanie do liczby kolumn tableau
 				int nextIndex = index + direction;
 				if (nextIndex < 0 || nextIndex > 6) return currentIndex;
 				if (!Game.Tableaux[nextIndex].IsEmpty) return nextIndex;
 				index = nextIndex;
+				searchedCount++;
 			}
+			
+			// Jeśli po przeszukaniu wszystkich nie znaleziono niepustej kolumny, zwróć bieżący indeks
+			return currentIndex;
 		}
 
 		private bool UpdateTableauCardSelection(int newIndex) {
