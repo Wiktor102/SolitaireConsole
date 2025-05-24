@@ -191,7 +191,7 @@ namespace SolitaireConsole.Input {
 			if (nextIndex == _context.SelectedTableauIndex!.Value) return false;
 
 			_context.SelectedTableauIndex = nextIndex;
-			UpdateTableauCardSelection(0);
+			UpdateTableauCardSelection(_context.SelectedCardIndex);
 			return true;
 		}
 
