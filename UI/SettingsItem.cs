@@ -45,4 +45,20 @@ namespace SolitaireConsole.UI {
 			_setter(_gameSettings, _values[currentIndex]);
 		}
 	}
+
+	/// <summary>
+	/// Settings item for boolean values
+	/// </summary>
+	public class BoolSettingsItem(string name, GameSettings gameSettings,
+		Func<GameSettings, bool> getter, Action<GameSettings, bool> setter) : SettingsItem(name) {
+		private readonly GameSettings _gameSettings = gameSettings;
+		private readonly Func<GameSettings, bool> _getter = getter;
+		private readonly Action<GameSettings, bool> _setter = setter;
+
+		public override string CurrentValueDisplay => _getter(_gameSettings) ? "TAK" : "NIE";
+
+		public override void ChangeValue(bool increase) {
+			_setter(_gameSettings, !_getter(_gameSettings));
+		}
+	}
 }

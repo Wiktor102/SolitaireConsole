@@ -5,6 +5,7 @@ namespace SolitaireConsole.UI {
     /// Klasa odpowiedzialna za wyświetlanie menu ustawień
     /// </summary>
     public class SettingsMenu {
+		private const int SETTING_LABEL_WIDTH = 40;
         private readonly GameSettings _gameSettings;
         private readonly SettingsItem[] _settingsItems;
         private readonly MenuRenderer _menuRenderer = new ConsoleMenuRenderer();
@@ -19,6 +20,12 @@ namespace SolitaireConsole.UI {
                     gs => gs.CurrentInputMode, 
                     (gs, value) => {
                         gs.CurrentInputMode = value;
+                        gs.NotifySettingsChanged();
+                    }),
+                new BoolSettingsItem("Automatycznie przenoś na stos końcowy", gameSettings,
+                    gs => gs.AutoMoveToFoundation,
+                    (gs, value) => {
+                        gs.AutoMoveToFoundation = value;
                         gs.NotifySettingsChanged();
                     })
             ];
@@ -77,10 +84,11 @@ namespace SolitaireConsole.UI {
             // Display settings items
             for (int i = 0; i < _settingsItems.Length; i++) {
                 SettingsItem item = _settingsItems[i];
-				int optionLength = item.Name.Length + item.CurrentValueDisplay.Length + 9;
+				string innerPadding = new(' ', SETTING_LABEL_WIDTH - item.Name.Length);
+				int optionLength = item.Name.Length + item.CurrentValueDisplay.Length + 6 + innerPadding.Length;
 				string padding = new(' ', (MenuRenderer.WIDTH - optionLength) / 2);
 
-                Console.Write($"{padding}{item.Name}:   ");
+                Console.Write($"{padding}{item.Name}:{innerPadding}");
                 Console.Write($"⮜ ");
 
 				if (i == _selectedIndex) {
@@ -108,6 +116,7 @@ namespace SolitaireConsole.UI {
 	/// </summary>
 	public class GameSettings {
 		public InputMode CurrentInputMode { get; set; } = InputMode.Arrow;
+		public bool AutoMoveToFoundation { get; set; } = false;
 
 		/// <summary>
 		/// Event wywoływany gdy jakiekolwiek ustawienie zostanie zmienione
