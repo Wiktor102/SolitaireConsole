@@ -1,8 +1,7 @@
 using SolitaireConsole.UI;
 using SolitaireConsole.Input; // Added for InputMode
 
-namespace SolitaireConsole {
-	/// <summary>
+namespace SolitaireConsole {	/// <summary>
 	/// Klasa odpowiedzialna za wyświetlanie menu wyboru poziomu trudności
 	/// </summary>
 	public class DifficultySelector {
@@ -11,7 +10,7 @@ namespace SolitaireConsole {
         private readonly SettingsMenu _settingsMenu;
         private readonly GameSettings _gameSettings;
 
-		public DifficultySelector(GameSettings gameSettings) {
+		public DifficultySelector(GameSettings gameSettings, SettingsManager settingsManager) {
             _gameSettings = gameSettings;
 			_difficultyMenu = new(Menu<int>.GAME_TITLE_HEADING, ["Wybierz poziom trudności:"], [
 				new("Łatwy (dobieranie 1 karty)", DifficultyLevel.Easy),
@@ -25,7 +24,7 @@ namespace SolitaireConsole {
                 new("Wyjdź", 0)
             ]);
 
-            _settingsMenu = new SettingsMenu(_gameSettings);
+            _settingsMenu = new SettingsMenu(_gameSettings, settingsManager);
 		}
 
 		/// <summary>

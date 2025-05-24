@@ -71,7 +71,7 @@ namespace SolitaireConsole.UI {
 	}
 
 	public abstract class MenuRenderer {
-		protected const int WIDTH = 83;
+		public const int WIDTH = 83;
 		
 		public abstract void DisplayTextLine(string text);
 		public abstract void DisplayMenuOption(string text, bool selected);
