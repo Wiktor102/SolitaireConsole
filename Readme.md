@@ -1,6 +1,7 @@
 ﻿# Pasjans Konsolowy (C#)
 
 ## Opis
+**Gra została opracowana jako praca konkursowa w II etapie konkursu [Gigathon](https://www.gigathon.pl/) 2025**
 
 Zaawansowana implementacja klasycznej gry karcianej Pasjans, działająca w oknie konsoli. Aplikacja oferuje przyjazny interfejs użytkownika z dwoma trybami sterowania, systemem ustawień, rankingiem wyników oraz obsługą cofania do 3 ostatnich ruchów. Celem gry jest przeniesienie wszystkich 52 kart na cztery stosy końcowe (Foundations), układając je według kolorów (kier ♥, karo ♦, pik ♠, trefl ♣) w kolejności od Asa do Króla.
 
@@ -265,3 +266,6 @@ public enum DifficultyLevel { Easy, Hard }                 // Poziomy trudności
 - **Testowalność** - separacja logiki biznesowej od interfejsu użytkownika
 - **Wydajność** - optymalne zarządzanie pamięcią i minimalizacja alokacji
 - **Łatwość utrzymania** - przejrzysty kod z konsekwentną konwencją nazewnictwa
+
+## Licencja
+Kod gry oraz skompilowaną grę (we wszystkich wersjach) obejmuje licencja _cc by-nc-nd 4.0_. Pełna treść dostępna jest w pliku [Licence](Licence). Dodatkowo udzielam jury konkursu [Gigathon](https://www.gigathon.pl/) wszelkich praw koniecznych do oceny pracy konkursowej (projektu gry zawartego w tym repozytorium oraz skompilowanych plików wykonywalnych).
