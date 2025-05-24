@@ -1,6 +1,3 @@
-using SolitaireConsole.Input;
-using SolitaireConsole.UI;
-
 namespace SolitaireConsole.UI {
 	public class Menu<T> {
 		public static readonly string[] GAME_TITLE_HEADING = [
@@ -93,6 +90,8 @@ namespace SolitaireConsole.UI {
 		}
 
 		public override void DisplayMenuOption(string text, bool selected) {
+			string padding = new(' ', (WIDTH - text.Length) / 2);
+			
 			string s = "";
 			if (selected) {
 				Console.BackgroundColor = ConsoleColor.Gray;
@@ -102,7 +101,7 @@ namespace SolitaireConsole.UI {
 				s += "  ";
 			}
 
-			DisplayTextLine(s + text);
+			Console.WriteLine(padding.Substring(2) + s + text + padding);
 			Console.ResetColor(); // Resetuj kolory po każdej opcji
 		}
 
