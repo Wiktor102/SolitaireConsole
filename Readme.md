@@ -274,5 +274,8 @@ public enum DifficultyLevel { Easy, Hard }                 // Poziomy trudności
 - **Wydajność** - optymalne zarządzanie pamięcią i minimalizacja alokacji
 - **Łatwość utrzymania** - przejrzysty kod z konsekwentną konwencją nazewnictwa
 
+## Szczegółowa dokumentacja
+W kodzie większość metod, klas i innych symboli posiada standardowe komentarze dokumentujące w formacie XML. By je przeglądać w wygodnej formie możesz skorzystać z narzędzi o których mowa [tutaj](https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/xmldoc/#tools-that-accept-xml-documentation-input).
+
 ## Licencja
 Kod gry oraz skompilowaną grę (we wszystkich wersjach) obejmuje licencja _cc by-nc-nd 4.0_. Pełna treść dostępna jest w pliku [Licence](Licence). Dodatkowo udzielam jury konkursu [Gigathon](https://www.gigathon.pl/) wszelkich praw koniecznych do oceny pracy konkursowej (projektu gry zawartego w tym repozytorium oraz skompilowanych plików wykonywalnych).
