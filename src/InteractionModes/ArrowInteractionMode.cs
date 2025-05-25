@@ -3,9 +3,16 @@ using SolitaireConsole.Input;
 using SolitaireConsole.CardPiles;
 
 namespace SolitaireConsole.InteractionModes {
+	/// <summary>
+	/// Tryb interakcji oparty na sterowaniu strzałkami.
+	/// </summary>
 	public class ArrowInteractionMode : InteractionMode {
 		private readonly ArrowInteractionContext context;
 
+		/// <summary>
+		/// Tworzy nowy tryb interakcji strzałkami dla podanej gry.
+		/// </summary>
+		/// <param name="game">Obiekt gry.</param>
 		public ArrowInteractionMode(Game game) : this(game, new ArrowInteractionContext()) { }
 
 		private ArrowInteractionMode(Game game, ArrowInteractionContext context)
@@ -14,26 +21,26 @@ namespace SolitaireConsole.InteractionModes {
 		}
 	}
 
+	/// <summary>
+	/// Kontekst interakcji dla trybu sterowania strzałkami.
+	/// Przechowuje informacje o aktualnie wybranym obszarze, kolumnie i karcie.
+	/// </summary>
 	public class ArrowInteractionContext() {
 		public PileType SelectedArea = PileType.Tableau;
 		public int? SelectedTableauIndex = 0; // Index kolumny głównego obszaru gry (Tableau)
 		public int SelectedCardIndex = 0; // Index karty w wybranym stosie (poziomo, ale pionowo dla Tableau - to nie ma większego znaczenia)
 
+		/// <summary>
+		/// Określa, czy aktualnie wybierany jest docelowy stos Tableau.
+		/// </summary>
 		public bool SelectingDestiantionOnTableau => SelectedDestTableauIndex != null;
 		public int? SelectedDestTableauIndex;
 
-		// TODO: Implement actual logic based on game state and rules
-		public bool CanSelectOrMove() {
-			// Placeholder: Always allow trying to select or initiate a move
-			return true; 
-		}
-
-		// TODO: Implement actual logic based on game state and rules
-		public bool CanCompleteMove() {
-			// Placeholder: Allow trying to complete a move if a destination is being selected
-			return SelectingDestiantionOnTableau;
-		}
-
+		/// <summary>
+		/// Sprawdza, czy wybrana karta w Tableau jest odkryta.
+		/// </summary>
+		/// <param name="game">Obiekt gry.</param>
+		/// <returns>Czy wybrana karta jest odkryta.</returns>
 		public bool IsSelectedCardInTableauFaceUp(Game game) {
 			if (SelectedArea != PileType.Tableau || SelectedTableauIndex == null) return false;
 			var tableau = game.Tableaux[SelectedTableauIndex.Value];

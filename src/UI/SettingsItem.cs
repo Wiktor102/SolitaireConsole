@@ -2,17 +2,28 @@ using SolitaireConsole.Input;
 
 namespace SolitaireConsole.UI {
     /// <summary>
-    /// Abstract base class for settings items
+    /// Abstrakcyjna klasa bazowa dla pozycji ustawień.
     /// </summary>
     public abstract class SettingsItem(string name) {
+		/// <summary>
+		/// Nazwa pozycji ustawień.
+		/// </summary>
 		public string Name { get; } = name;
+
+		/// <summary>
+		/// Aktualna wartość pozycji ustawień w formie tekstowej.
+		/// </summary>
 		public abstract string CurrentValueDisplay { get; }
 
+		/// <summary>
+		/// Zmienia wartość pozycji ustawień.
+		/// </summary>
+		/// <param name="increase">Czy zwiększyć wartość (true) czy zmniejszyć (false).</param>
 		public abstract void ChangeValue(bool increase);
     }
 
 	/// <summary>
-	/// Settings item for enum values
+	/// Pozycja ustawień dla wartości typu enum.
 	/// </summary>
 	public class EnumSettingsItem<T>(string name, GameSettings gameSettings,
 		Func<GameSettings, T> getter, Action<GameSettings, T> setter) : SettingsItem(name) where T : struct, Enum {
@@ -47,7 +58,7 @@ namespace SolitaireConsole.UI {
 	}
 
 	/// <summary>
-	/// Settings item for boolean values
+	/// Pozycja ustawień dla wartości typu bool.
 	/// </summary>
 	public class BoolSettingsItem(string name, GameSettings gameSettings,
 		Func<GameSettings, bool> getter, Action<GameSettings, bool> setter) : SettingsItem(name) {

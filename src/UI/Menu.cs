@@ -1,4 +1,7 @@
 namespace SolitaireConsole.UI {
+	/// <summary>
+	/// Klasa reprezentująca menu wyboru z opcjami typu T.
+	/// </summary>
 	public class Menu<T> {
 		public static readonly string[] GAME_TITLE_HEADING = [
 			@" ______   ______     ______       __     ______     __   __     ______   ",
@@ -14,6 +17,12 @@ namespace SolitaireConsole.UI {
 		protected int selectedIndex = 0;
 		private readonly MenuRenderer _renderer = new ConsoleMenuRenderer(); // Kompozycja
 
+		/// <summary>
+		/// Tworzy nowe menu z nagłówkiem, podtytułem i opcjami.
+		/// </summary>
+		/// <param name="heading">Nagłówek menu.</param>
+		/// <param name="subtitle">Podtytuł menu.</param>
+		/// <param name="options">Tablica opcji menu.</param>
 		public Menu(string[] heading, string[] subtitle, MenuOption<T>[] options) {
 			if (options.Length < 1) throw new ArgumentException("Menu must have at least one option.");
 			this.Heading = heading;
@@ -21,6 +30,10 @@ namespace SolitaireConsole.UI {
 			this.options = options;
 		}
 
+		/// <summary>
+		/// Pozwala użytkownikowi wybrać opcję z menu.
+		/// </summary>
+		/// <returns>Wybrana wartość typu T.</returns>
 		public T Select() {
 			ConsoleKeyInfo key;
 
@@ -59,6 +72,10 @@ namespace SolitaireConsole.UI {
 			_renderer.DisplayDividerLine();
 		}
 
+		/// <summary>
+		/// Aktualizuje indeks wybranej opcji w menu.
+		/// </summary>
+		/// <param name="direction">Kierunek zmiany (1 w dół, -1 w górę).</param>
 		private void UpdateSelectedIndex(int direction) {
 			if (direction < 0) {
 				// Przesuń w górę (z zawijaniem)
@@ -70,12 +87,34 @@ namespace SolitaireConsole.UI {
 		}
 	}
 
+	/// <summary>
+	/// Abstrakcyjna klasa do renderowania menu.
+	/// </summary>
 	public abstract class MenuRenderer {
 		public const int WIDTH = 83;
 		
+		/// <summary>
+		/// Wyświetla pojedynczą linię tekstu.
+		/// </summary>
+		/// <param name="text">Tekst do wyświetlenia.</param>
 		public abstract void DisplayTextLine(string text);
+
+		/// <summary>
+		/// Wyświetla opcję menu, podświetlając ją jeśli jest wybrana.
+		/// </summary>
+		/// <param name="text">Tekst opcji.</param>
+		/// <param name="selected">Czy opcja jest wybrana.</param>
 		public abstract void DisplayMenuOption(string text, bool selected);
+
+		/// <summary>
+		/// Wyświetla linię oddzielającą.
+		/// </summary>
 		public abstract void DisplayDividerLine();
+
+		/// <summary>
+		/// Wyświetla tablicę linii tekstu.
+		/// </summary>
+		/// <param name="text">Tablica linii tekstu.</param>
 		public virtual void DisplayText(string[] text) {
 			foreach (var line in text) {
 				DisplayTextLine(line);
@@ -83,6 +122,9 @@ namespace SolitaireConsole.UI {
 		}
 	}
 
+	/// <summary>
+	/// Implementacja MenuRenderer wyświetlająca menu w konsoli.
+	/// </summary>
 	public class ConsoleMenuRenderer : MenuRenderer {
 		public override void DisplayTextLine(string text) {
 			string padding = new(' ', (WIDTH - text.Length) / 2);

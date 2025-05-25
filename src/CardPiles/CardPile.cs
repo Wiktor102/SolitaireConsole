@@ -1,39 +1,67 @@
 using SolitaireConsole.UI;
 
 namespace SolitaireConsole.CardPiles {
-	// Enum określający typ stosu (do identyfikacji w ruchach)
+	/// <summary>
+	/// Enum określający typ stosu kart (do identyfikacji w ruchach).
+	/// </summary>
 	public enum PileType { Stock, Waste, Foundation, Tableau }
 
-	// Klasa bazowa dla różnych stosów kart (abstrakcyjna)
+	/// <summary>
+	/// Klasa bazowa dla różnych stosów kart (abstrakcyjna).
+	/// </summary>
 	public abstract class CardPile {
 		protected List<Card> cards = []; // Lista kart na stosie
-		public List<Card> Cards => [.. cards]; // Publiczna właściwość do dostępu do kart
-		public abstract PileType Type { get; } // Typ stosu (Stock, Waste, Foundation, Tableau)
 
-		// Zwraca liczbę kart na stosie
+		/// <summary>
+		/// Publiczna właściwość do dostępu do kart na stosie.
+		/// </summary>
+		public List<Card> Cards => [.. cards];
+
+		/// <summary>
+		/// Typ stosu (Stock, Waste, Foundation, Tableau).
+		/// </summary>
+		public abstract PileType Type { get; }
+
+		/// <summary>
+		/// Zwraca liczbę kart na stosie.
+		/// </summary>
 		public int Count => cards.Count;
 
-		// Sprawdza, czy stos jest pusty
+		/// <summary>
+		/// Sprawdza, czy stos jest pusty.
+		/// </summary>
 		public bool IsEmpty => cards.Count == 0;
 
-		// Dodaje kartę na wierzch stosu
+		/// <summary>
+		/// Dodaje kartę na wierzch stosu.
+		/// </summary>
+		/// <param name="card">Karta do dodania.</param>
 		public virtual void AddCard(Card card) {
 			cards.Add(card);
 		}
 
-		// Dodaje listę kart na wierzch stosu
+		/// <summary>
+		/// Dodaje listę kart na wierzch stosu.
+		/// </summary>
+		/// <param name="cardsToAdd">Karty do dodania.</param>
 		public virtual void AddCards(IEnumerable<Card> cardsToAdd) {
 			cards.AddRange(cardsToAdd);
 		}
 
-		// Pobiera kartę z wierzchu stosu (bez usuwania)
-		// Zwraca null, jeśli stos jest pusty
+		/// <summary>
+		/// Pobiera kartę z wierzchu stosu (bez usuwania).
+		/// Zwraca null, jeśli stos jest pusty.
+		/// </summary>
+		/// <returns>Karta z wierzchu stosu lub null.</returns>
 		public Card? PeekTopCard() {
 			return cards.LastOrDefault();
 		}
 
-		// Usuwa i zwraca kartę z wierzchu stosu
-		// Zwraca null, jeśli stos jest pusty
+		/// <summary>
+		/// Usuwa i zwraca kartę z wierzchu stosu.
+		/// Zwraca null, jeśli stos jest pusty.
+		/// </summary>
+		/// <returns>Usunięta karta lub null.</returns>
 		public virtual Card? RemoveTopCard() {
 			if (IsEmpty) return null;
 			Card card = cards[^1];
@@ -41,7 +69,11 @@ namespace SolitaireConsole.CardPiles {
 			return card;
 		}
 
-		// Usuwa i zwraca określoną liczbę kart z wierzchu stosu
+		/// <summary>
+		/// Usuwa i zwraca określoną liczbę kart z wierzchu stosu.
+		/// </summary>
+		/// <param name="count">Liczba kart do usunięcia.</param>
+		/// <returns>Lista usuniętych kart.</returns>
 		public virtual List<Card> RemoveTopCards(int count) {
 			if (count <= 0 || count > cards.Count) return [];
 			List<Card> removed = cards.GetRange(cards.Count - count, count);
@@ -49,19 +81,33 @@ namespace SolitaireConsole.CardPiles {
 			return removed;
 		}
 
-		// Czyści stos (usuwa wszystkie karty)
+		/// <summary>
+		/// Czyści stos (usuwa wszystkie karty).
+		/// </summary>
 		public void Clear() {
 			cards.Clear();
 		}
 
+		/// <summary>
+		/// Zwraca reprezentację tekstową stosu.
+		/// </summary>
+		/// <returns>Tekstowa reprezentacja stosu.</returns>
 		public override string ToString() {
 			return $"{(IsEmpty ? "[   ]" : "[ * ]")} ({Count}) "; // Zwraca [ * ] jeśli są karty, [   ] jeśli pusty
 		}
 
-		// Abstrakcyjna metoda sprawdzająca, czy można dodać kartę na ten stos
-		// Musi być zaimplementowana przez klasy dziedziczące
+		/// <summary>
+		/// Abstrakcyjna metoda sprawdzająca, czy można dodać kartę na ten stos.
+		/// Musi być zaimplementowana przez klasy dziedziczące.
+		/// </summary>
+		/// <param name="card">Karta do sprawdzenia.</param>
+		/// <returns>Czy można dodać kartę.</returns>
 		public abstract bool CanAddCard(Card card);
 
+		/// <summary>
+		/// Zwraca informacje o wyświetlaniu stosu.
+		/// </summary>
+		/// <returns>Informacje o wyświetlaniu stosu.</returns>
 		public abstract PileDisplayInfo GetDisplayInfo();
 	}
 }

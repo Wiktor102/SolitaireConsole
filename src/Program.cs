@@ -8,7 +8,7 @@ namespace SolitaireConsole {
 			Console.Title = "Konsolowy Pasjans"; // Ustawia tytuł okna konsoli
 			Console.OutputEncoding = Encoding.UTF8; // Ważne dla polskich znaków i symboli kart
 
-			// Initialize settings manager and load settings
+			// Inicjalizuj menedżera ustawień i wczytaj ustawienia
 			SettingsManager settingsManager = new SettingsManager();
 			GameSettings gameSettings = settingsManager.LoadSettings();
 			bool playAgain = true;
@@ -21,7 +21,7 @@ namespace SolitaireConsole {
 					continue;
 				}
 
-				// If StartGame is chosen, then ask for difficulty
+				// Jeśli wybrano StartGame, zapytaj o poziom trudności
 				DifficultyLevel? difficulty = difficultySelector.ChooseDifficulty();
 
 				if (!difficulty.HasValue) { // Jeśli użytkownik wybrał 'Wróć' w menu trudności
@@ -29,7 +29,7 @@ namespace SolitaireConsole {
 					continue; // Wróć na początek pętli while (ponownie pokaż menu główne)
 				}
 
-				Game game = new(difficulty.Value, gameSettings); // Rozpocznij nową grę, passing gameSettings
+				Game game = new(difficulty.Value, gameSettings); // Rozpocznij nową grę, przekazując gameSettings
 				GameResult result = game.RunGameLoop(); // Uruchom główną pętlę gry
 
 				// Obsłuż wynik gry

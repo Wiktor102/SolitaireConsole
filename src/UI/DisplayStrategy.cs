@@ -5,6 +5,9 @@ using SolitaireConsole.InteractionModes;
 using SolitaireConsole.Input;
 
 namespace SolitaireConsole.UI {
+	/// <summary>
+	/// Struktura przechowująca informacje o wyświetlaniu stosu kart.
+	/// </summary>
 	public struct PileDisplayInfo {
 		public List<CardSpot> CardsToDisplay;
 		public PileType PileType;
@@ -12,6 +15,9 @@ namespace SolitaireConsole.UI {
 		public int? ShowAmount;
 	}
 
+	/// <summary>
+	/// Reprezentuje miejsce na kartę lub kolor w stosie.
+	/// </summary>
 	public class CardSpot {
 		public Card? Card;
 		public Suit? Suit;
@@ -29,17 +35,27 @@ namespace SolitaireConsole.UI {
 		}
 	}
 
+	/// <summary>
+	/// Kierunek wyświetlania stosu kart.
+	/// </summary>
 	public enum DisplayDirection {
 		Horizontal,
 		Vertical
 	}
 
+	/// <summary>
+	/// Abstrakcyjna klasa strategii wyświetlania gry.
+	/// </summary>
 	public abstract class DisplayStrategy {
 		protected Game game;
 		protected readonly ArrowInteractionContext? _context = null;
 		protected readonly List<InputActionHint> actionHints = [];
 		protected bool ShowPileIds => _context == null; // W trybie strzałek nie pokazujemy ID stosów
 
+		/// <summary>
+		/// Tworzy strategię wyświetlania dla gry tekstowej.
+		/// </summary>
+		/// <param name="game">Obiekt gry.</param>
 		public DisplayStrategy(Game game) {
 			this.game = game;
 			actionHints = [
@@ -51,6 +67,11 @@ namespace SolitaireConsole.UI {
 			];
 		}
 
+		/// <summary>
+		/// Tworzy strategię wyświetlania z kontekstem interakcji strzałkami.
+		/// </summary>
+		/// <param name="game">Obiekt gry.</param>
+		/// <param name="context">Kontekst interakcji strzałkami.</param>
 		public DisplayStrategy(Game game, ArrowInteractionContext context) : this(game) {
 			_context = context;
 			actionHints = [
@@ -111,10 +132,28 @@ namespace SolitaireConsole.UI {
 			];
 		}
 
+		/// <summary>
+		/// Wyświetla aktualny stan gry.
+		/// </summary>
 		public abstract void Display();
+
+		/// <summary>
+		/// Wyświetla dostępne podpowiedzi akcji.
+		/// </summary>
 		public abstract void DisplayHints();
+
+		/// <summary>
+		/// Wyświetla ekran zwycięstwa.
+		/// </summary>
 		public abstract void DisplayWinScreen();
 
+		/// <summary>
+		/// Zwraca kolor tła komórki w macierzy wyświetlania stosów.
+		/// </summary>
+		/// <param name="info">Informacje o stosie.</param>
+		/// <param name="row">Wiersz.</param>
+		/// <param name="column">Kolumna.</param>
+		/// <returns>Kolor tła komórki.</returns>
 		protected ConsoleColor GetMatrixCellBg(PileDisplayInfo info, int row, int column) {
 			const ConsoleColor normalColor = ConsoleColor.Black;
 			const ConsoleColor selectedColor = ConsoleColor.Gray;
@@ -145,6 +184,9 @@ namespace SolitaireConsole.UI {
 		}
 	}
 
+	/// <summary>
+	/// Strategia wyświetlania gry w konsoli.
+	/// </summary>
 	public class ConsoleDisplayStrategy : DisplayStrategy {
 		public ConsoleDisplayStrategy(Game game) : base(game) { }
 		public ConsoleDisplayStrategy(Game game, ArrowInteractionContext context) : base(game, context) { }

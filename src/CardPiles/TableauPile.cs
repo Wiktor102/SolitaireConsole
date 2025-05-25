@@ -1,11 +1,16 @@
 using SolitaireConsole.UI;
 
 namespace SolitaireConsole.CardPiles {
-	// Kolumna gry (Tableau) - 7 kolumn na planszy
+	/// <summary>
+	/// Reprezentuje kolumnę gry (Tableau) w pasjansie – jedną z 7 kolumn na planszy.
+	/// </summary>
 	public class TableauPile() : CardPile() {
 		public override PileType Type { get => PileType.Tableau; }
 
-		// Metoda do inicjalnego rozdania kart do kolumny
+		/// <summary>
+		/// Rozdaje początkowe karty do kolumny i odkrywa ostatnią z nich.
+		/// </summary>
+		/// <param name="initialCards">Lista kart do rozdania.</param>
 		public void DealInitialCards(List<Card> initialCards) {
 			cards.AddRange(initialCards);
 			// Odkrywamy tylko ostatnią kartę
@@ -32,8 +37,12 @@ namespace SolitaireConsole.CardPiles {
 			}
 		}
 
-		// Sprawdza, czy można dodać sekwencję kart na wierzch tej kolumny
-		// (Pierwsza karta sekwencji musi pasować do wierzchniej karty kolumny)
+		/// <summary>
+		/// Sprawdza, czy można dodać sekwencję kart na wierzch tej kolumny.
+		/// Pierwsza karta sekwencji musi pasować do wierzchniej karty kolumny.
+		/// </summary>
+		/// <param name="sequence">Sekwencja kart do dodania.</param>
+		/// <returns>Czy sekwencja może zostać dodana.</returns>
 		public bool CanAddSequence(List<Card> sequence) {
 			if (sequence == null || sequence.Count == 0 || !sequence.First().IsFaceUp) {
 				return false; // Sekwencja musi istnieć i pierwsza karta musi być odkryta
@@ -42,7 +51,10 @@ namespace SolitaireConsole.CardPiles {
 			return CanAddCard(sequence.First());
 		}
 
-		// Odkrywa wierzchnią kartę, jeśli jest zakryta
+		/// <summary>
+		/// Odkrywa wierzchnią kartę, jeśli jest zakryta.
+		/// </summary>
+		/// <returns>Zwraca true, jeśli karta została odkryta.</returns>
 		public bool FlipTopCardIfNecessary() {
 			if (!IsEmpty && !cards.Last().IsFaceUp) {
 				cards.Last().IsFaceUp = true;
@@ -51,8 +63,10 @@ namespace SolitaireConsole.CardPiles {
 			return false; // Karta już była odkryta lub stos jest pusty
 		}
 
-		// Znajduje indeks pierwszej odkrytej karty od góry
-		// Zwraca -1, jeśli nie ma odkrytych kart
+		/// <summary>
+		/// Znajduje indeks pierwszej odkrytej karty od góry.
+		/// </summary>
+		/// <returns>Indeks pierwszej odkrytej karty lub -1 jeśli brak.</returns>
 		public int FindFirstFaceUpCardIndex() {
 			for (int i = 0; i < cards.Count; i++) {
 				if (cards[i].IsFaceUp) {
@@ -62,7 +76,11 @@ namespace SolitaireConsole.CardPiles {
 			return -1;
 		}
 
-		// Pobiera sekwencję odkrytych kart, zaczynając od podanego indeksu
+		/// <summary>
+		/// Pobiera sekwencję odkrytych kart, zaczynając od podanego indeksu.
+		/// </summary>
+		/// <param name="startIndex">Indeks początkowy.</param>
+		/// <returns>Lista odkrytych kart od podanego indeksu.</returns>
 		public List<Card> GetFaceUpSequence(int startIndex) {
 			if (startIndex < 0 || startIndex >= cards.Count || !cards[startIndex].IsFaceUp) {
 				return new List<Card>(); // Zwraca pustą listę, jeśli indeks jest nieprawidłowy lub karta jest zakryta
@@ -71,7 +89,11 @@ namespace SolitaireConsole.CardPiles {
 			return cards.GetRange(startIndex, cards.Count - startIndex);
 		}
 
-		// Usuwa sekwencję kart zaczynającą się od podanego indeksu
+		/// <summary>
+		/// Usuwa sekwencję kart zaczynającą się od podanego indeksu.
+		/// </summary>
+		/// <param name="startIndex">Indeks początkowy sekwencji do usunięcia.</param>
+		/// <returns>Lista usuniętych kart.</returns>
 		public List<Card> RemoveSequence(int startIndex) {
 			if (startIndex < 0 || startIndex >= cards.Count) {
 				return new List<Card>();
@@ -82,7 +104,10 @@ namespace SolitaireConsole.CardPiles {
 			return removed;
 		}
 
-		// Zwraca listę kart w kolumnie (do wyświetlania)
+		/// <summary>
+		/// Zwraca listę kart w kolumnie do wyświetlania.
+		/// </summary>
+		/// <returns>Lista kart w kolumnie.</returns>
 		public List<Card> GetCardsForDisplay() {
 			return cards;
 		}

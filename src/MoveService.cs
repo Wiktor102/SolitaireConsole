@@ -3,53 +3,81 @@ using SolitaireConsole.Utils;
 using SolitaireConsole.UI;
 
 namespace SolitaireConsole {
+	/// <summary>
+	/// Serwis odpowiedzialny za obsługę ruchów w grze.
+	/// </summary>
 	internal class MoveService {
 		private readonly Game _game;
 		private readonly GameSettings _gameSettings;
 
+		/// <summary>
+		/// Tworzy nowy MoveService dla danej gry i ustawień.
+		/// </summary>
+		/// <param name="game">Obiekt gry.</param>
+		/// <param name="gameSettings">Ustawienia gry.</param>
 		public MoveService(Game game, GameSettings gameSettings) {
 			_game = game;
 			_gameSettings = gameSettings;
 		}
 
+		/// <summary>
+		/// Próbuje wykonać ruch przeniesienia kart między stosami.
+		/// </summary>
+		/// <param name="sourceType">Typ stosu źródłowego.</param>
+		/// <param name="sourceIndex">Indeks stosu źródłowego.</param>
+		/// <param name="destType">Typ stosu docelowego.</param>
+		/// <param name="destIndex">Indeks stosu docelowego.</param>
+		/// <param name="cardCount">Liczba przenoszonych kart.</param>
+		/// <returns>Czy ruch się powiódł.</returns>
 		public bool TryMove(PileType sourceType, int sourceIndex, PileType destType, int destIndex, int cardCount = 1) {
-			// 1. Retrieve piles
+			// 1. Pobierz stosy
 			var sourcePile = GetPile(sourceType, sourceIndex);
 			var destPile = GetPile(destType, destIndex);
-			ValidatePiles(sourceType, sourceIndex, destType, destIndex, sourcePile, destPile); // Throws if invalid
+			ValidatePiles(sourceType, sourceIndex, destType, destIndex, sourcePile, destPile); // Wyrzuca wyjątek, jeśli stosy są nieprawidłowe
 
-			// 2. Determine cards to move
+			// 2. Określ karty do przeniesienia
 			var movedCards = ExtractMovedCards(sourceType, cardCount, sourcePile!);
 			if (movedCards.Count == 0) {
 				throw new EmptyPileException("Brak kart do przeniesienia.");
 			}
 
-			// 3. Validate destination rules
+			// 3. Walidacja reguł stosu docelowego
 			try {
 				ValidateDestination(destType, destPile!, movedCards);
 			} catch (MoveException) {
-				sourcePile!.AddCards(movedCards); // Restore cards before re-throwing
+				sourcePile!.AddCards(movedCards); // Przywróć karty do stosu źródłowego
 				throw;
 			}
 
-			// 4. Handle source flip and foundation suit
+			// 4. Obsłuż odkrycie karty w stosie źródłowym i ustawienie koloru w fundamencie
 			bool wasFlipped = HandleSourceFlip(sourceType, sourcePile!);
 			bool wasFoundationSet = HandleFoundationSetup(destType, destPile!);
 
-			// 5. Execute move
+			// 5. Wykonaj przeniesienie
 			PlaceCards(destPile!, movedCards);
 
-			// 6. Record move and increment count
+			// 6. Zapisz ruch i zwiększ licznik
 			RecordMove(sourceType, sourceIndex, destType, destIndex, movedCards, wasFlipped, wasFoundationSet);
 			return true;
 		}
 
+		/// <summary>
+		/// Próbuje automatycznie przenieść kartę na stos końcowy (Foundation), jeśli opcja jest włączona.
+		/// </summary>
+		/// <param name="sourceType">Typ stosu źródłowego.</param>
+		/// <param name="sourceIndex">Indeks stosu źródłowego.</param>
+		/// <returns>Czy ruch się powiódł.</returns>
 		public bool TryAutoMoveToFoundation(PileType sourceType, int sourceIndex) {
 			if (!_gameSettings.AutoMoveToFoundation) return false; // Sprawdź czy automatyczne przenoszenie jest włączone
 			return TryManualMoveToFoundation(sourceType, sourceIndex);
 		}
 
-		// Manual move to foundation that bypasses the AutoMoveToFoundation setting
+		/// <summary>
+		/// Ręczne przeniesienie karty na stos końcowy (Foundation), niezależnie od ustawienia automatycznego przenoszenia.
+		/// </summary>
+		/// <param name="sourceType">Typ stosu źródłowego.</param>
+		/// <param name="sourceIndex">Indeks stosu źródłowego.</param>
+		/// <returns>Czy ruch się powiódł.</returns>
 		public bool TryManualMoveToFoundation(PileType sourceType, int sourceIndex) {
 			var sourcePile = GetPile(sourceType, sourceIndex);
 			if (sourcePile == null || sourcePile.IsEmpty) return false; // Stos źródłowy nie istnieje lub jest pusty
@@ -59,42 +87,46 @@ namespace SolitaireConsole {
 			if (sourceType == PileType.Tableau) {
 				if (sourcePile is TableauPile tableauPile) {
 					cardToConsiderForMove = tableauPile.Cards.LastOrDefault();
-					// Pre-check: card must exist and be face up for move consideration
+					// Sprawdź, czy karta jest odkryta
 					if (cardToConsiderForMove == null || !cardToConsiderForMove.IsFaceUp) {
 						return false;
 					}
 				} else {
-					return false; // Should not happen if GetPile is correct
+					return false; // Nie powinno się zdarzyć jeśli GetPile działa poprawnie
 				}
 			} else if (sourceType == PileType.Waste) {
 				cardToConsiderForMove = sourcePile.PeekTopCard();
 				if (cardToConsiderForMove == null) {
-					return false; // Waste pile is empty
+					return false; // Stos Waste jest pusty
 				}
 			} else {
-				return false; // Manual move is primarily for Tableau and Waste
+				return false; // Przenoszenie do Foundation jest możliwe tylko z Tableau lub Waste
 			}
 
-			// Find a suitable foundation
+			// FZnajdź odpowiedni stos końcowy (Foundation)
 			for (int i = 0; i < _game.Foundations.Count; i++) {
 				var foundationPile = _game.Foundations[i];
 				if (foundationPile.CanAddCard(cardToConsiderForMove)) {
-					// Attempt the move. TryMove will handle detailed validation,
-					// including the IsFaceUp check again via ExtractMovedCards for Tableau.
+					// Spróbuj wykonać ruch. TryMove przeprowadzi szczegółową walidację,
+					// w tym ponownie sprawdzi IsFaceUp poprzez ExtractMovedCards dla Tableau.
 					return TryMove(sourceType, sourceIndex, PileType.Foundation, i, 1);
 				}
 			}
 
-			return false; // No suitable foundation found or move failed
+			return false; // Nie znaleziono odpowiedniego stosu końcowego
 		}
 
-		// Validate that both source and destination piles exist
+		/// <summary>
+		/// Waliduje, czy oba stosy (źródłowy i docelowy) istnieją.
+		/// </summary>
 		private void ValidatePiles(PileType sourceType, int sourceIndex, PileType destType, int destIndex, CardPile? sourcePile, CardPile? destPile) {
 			if (sourcePile == null) throw new InvalidPileException($"Nieprawidłowy stos źródłowy: {sourceType}{(sourceIndex >= 0 ? sourceIndex + 1 : "")}");
 			if (destPile == null) throw new InvalidPileException($"Nieprawidłowy stos docelowy: {destType}{(destIndex >= 0 ? destIndex + 1 : "")}");
 		}
 
-		// Extract the cards to move (single card or sequence)
+		/// <summary>
+		/// Pobiera karty do przeniesienia (pojedyncza karta lub sekwencja).
+		/// </summary>
 		private List<Card> ExtractMovedCards(PileType sourceType, int cardCount, CardPile sourcePile) {
 			if (sourcePile.IsEmpty) throw new EmptyPileException("Stos źródłowy jest pusty.");
 			if (sourceType == PileType.Tableau && sourcePile is TableauPile tableau) {
@@ -103,7 +135,7 @@ namespace SolitaireConsole {
 					var sequence = tableau.GetFaceUpSequence(startIndexInPile);
 					if (sequence.Count < cardCount) throw new InvalidCardSequenceException("Niewystarczająca liczba odkrytych kart w sekwencji.");
 
-					// Validate the sequence itself before attempting to remove
+					// Sprawdź, czy sekwencja jest poprawna (kolor i wartość)
 					for (int i = 0; i < cardCount - 1; i++) {
 						if (sequence[i].Color == sequence[i + 1].Color || sequence[i].Rank != sequence[i + 1].Rank + 1) {
 							throw new InvalidCardSequenceException("Niepoprawna sekwencja kart do przeniesienia (kolor lub wartość).");
@@ -127,7 +159,9 @@ namespace SolitaireConsole {
 			return sourcePile.RemoveTopCards(cardCount);
 		}
 
-		// Validate destination rules for single or multiple cards
+		/// <summary>
+		/// Waliduje reguły docelowego stosu dla pojedynczej karty lub sekwencji.
+		/// </summary>
 		private void ValidateDestination(PileType destType, CardPile destPile, List<Card> movedCards) {
 			if (movedCards.Count == 1) {
 				if (!destPile.CanAddCard(movedCards[0])) {
@@ -142,7 +176,9 @@ namespace SolitaireConsole {
 			}
 		}
 
-		// Flip the top card of source if needed
+		/// <summary>
+		/// Odkrywa wierzchnią kartę stosu źródłowego, jeśli to konieczne.
+		/// </summary>
 		private bool HandleSourceFlip(PileType sourceType, CardPile sourcePile) {
 			if (sourceType == PileType.Tableau && sourcePile is TableauPile tableau) {
 				return tableau.FlipTopCardIfNecessary();
@@ -150,24 +186,33 @@ namespace SolitaireConsole {
 			return false;
 		}
 
-		// Determine if foundation suit was set on an empty foundation
+		/// <summary>
+		/// Określa, czy kolor stosu końcowego został ustawiony na pustym stosie.
+		/// </summary>
 		private bool HandleFoundationSetup(PileType destType, CardPile destPile) {
 			return destType == PileType.Foundation && destPile.Count == 0;
 		}
 
-		// Place moved cards onto destination pile
+		/// <summary>
+		/// Umieszcza przenoszone karty na stosie docelowym.
+		/// </summary>
 		private void PlaceCards(CardPile destPile, List<Card> movedCards) {
 			if (movedCards.Count == 1) destPile.AddCard(movedCards[0]);
 			else destPile.AddCards(movedCards);
 		}
 
-		// Record the move and increment counters
+		/// <summary>
+		/// Zapisuje ruch i inkrementuje liczniki.
+		/// </summary>
 		private void RecordMove(PileType sourceType, int sourceIndex, PileType destType, int destIndex, List<Card> movedCards, bool wasFlipped, bool wasFoundationSet) {
 			var record = new MoveRecord(sourceType, sourceIndex, destType, destIndex, movedCards, wasFlipped, wasFoundationSet);
 			_game.AddMoveRecord(record);
 			_game.IncrementMoveCount();
 		}
 
+		/// <summary>
+		/// Zwraca stos na podstawie typu i indeksu.
+		/// </summary>
 		private CardPile? GetPile(PileType type, int index) {
 			return type switch {
 				PileType.Stock => _game.Stock,

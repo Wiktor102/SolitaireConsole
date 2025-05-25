@@ -5,7 +5,9 @@ using SolitaireConsole.UI;
 using SolitaireConsole.Utils;
 
 namespace SolitaireConsole {
-	// Główna klasa zarządzająca logiką gry
+	/// <summary>
+	/// Główna klasa zarządzająca logiką gry.
+	/// </summary>
 	public class Game {
 		public static int LastMovesCount = 0;
 
@@ -25,7 +27,12 @@ namespace SolitaireConsole {
 
 		public string? LastMoveError { get; private set; }
 
-		public Game(DifficultyLevel difficulty, GameSettings gameSettings) { // Added gameSettings parameter
+		/// <summary>
+		/// Tworzy nową grę z wybranym poziomem trudności i ustawieniami.
+		/// </summary>
+		/// <param name="difficulty">Poziom trudności.</param>
+		/// <param name="gameSettings">Ustawienia gry.</param>
+		public Game(DifficultyLevel difficulty, GameSettings gameSettings) {
 			Difficulty = difficulty;
             GameSettings = gameSettings; // Assign to field
 			Stock = new StockPile();
@@ -55,7 +62,10 @@ namespace SolitaireConsole {
 			}
 		}
 
-		// Metoda do obsługi dobierania kart ze stosu rezerwowego (Stock)
+		/// <summary>
+		/// Obsługuje dobieranie kart ze stosu rezerwowego (Stock).
+		/// </summary>
+		/// <returns>Czy operacja się powiodła.</returns>
 		public bool DrawFromStock() {
 			// Sprawdź, czy można cofnąć ten ruch (jeśli historia jest pełna)
 			bool canUndo = _moveHistory.Count < MaxUndoSteps;
@@ -102,7 +112,15 @@ namespace SolitaireConsole {
 			return false; // Nie udało się dobrać (choć to nie powinno się zdarzyć po sprawdzeniu IsEmpty)
 		}
 
-		// Metoda do próby przeniesienia karty lub sekwencji kart
+		/// <summary>
+		/// Próbuje przenieść kartę lub sekwencję kart między stosami.
+		/// </summary>
+		/// <param name="sourceType">Typ stosu źródłowego.</param>
+		/// <param name="sourceIndex">Indeks stosu źródłowego.</param>
+		/// <param name="destType">Typ stosu docelowego.</param>
+		/// <param name="destIndex">Indeks stosu docelowego.</param>
+		/// <param name="cardCount">Liczba przenoszonych kart.</param>
+		/// <returns>Czy operacja się powiodła.</returns>
 		public bool TryMove(PileType sourceType, int sourceIndex, PileType destType, int destIndex, int cardCount = 1) {
 			ClearLastMoveError();
 			try {
@@ -113,7 +131,12 @@ namespace SolitaireConsole {
 			}
 		}
 
-		// Metoda do próby automatyczneo przeniesienia karty na stos końcowy (Foundation)
+		/// <summary>
+		/// Próbuje automatycznie przenieść kartę na stos końcowy (Foundation).
+		/// </summary>
+		/// <param name="sourceType">Typ stosu źródłowego.</param>
+		/// <param name="sourceIndex">Indeks stosu źródłowego.</param>
+		/// <returns>Czy operacja się powiodła.</returns>
 		public bool TryAutoMoveToFoundation(PileType sourceType, int sourceIndex) {
 			ClearLastMoveError();
 			try {
@@ -124,7 +147,12 @@ namespace SolitaireConsole {
 			}
 		}
 
-		// Metoda do próby ręcznego przeniesienia karty na stos końcowy (Foundation) - pomija ustawienie AutoMoveToFoundation
+		/// <summary>
+		/// Próbuje ręcznie przenieść kartę na stos końcowy (Foundation), pomijając automatyczne ustawienie.
+		/// </summary>
+		/// <param name="sourceType">Typ stosu źródłowego.</param>
+		/// <param name="sourceIndex">Indeks stosu źródłowego.</param>
+		/// <returns>Czy operacja się powiodła.</returns>
 		public bool TryManualMoveToFoundation(PileType sourceType, int sourceIndex) {
 			ClearLastMoveError();
 			try {
@@ -135,9 +163,12 @@ namespace SolitaireConsole {
 			}
 		}
 
-		// Metoda do cofania ostatniego ruchu
+		/// <summary>
+		/// Cofa ostatni ruch.
+		/// </summary>
+		/// <returns>Czy operacja się powiodła.</returns>
 		public bool UndoLastMove() {
-			ClearLastMoveError(); // Clear any previous error
+			ClearLastMoveError(); // Wyczyść poprzedni błąd
 			if (_moveHistory.Count == 0) {
 				SetLastMoveError("Brak ruchów do cofnięcia.");
 				return false;
@@ -234,28 +265,43 @@ namespace SolitaireConsole {
 			}
 		}
 
+		/// <summary>
+		/// Sprawdza, czy można cofnąć ostatni ruch.
+		/// </summary>
+		/// <returns>Czy cofnięcie jest możliwe.</returns>
 		public bool CanUndoLastMove() {
 			return _moveHistory.Count > 0;
 		}
 
+		/// <summary>
+		/// Sprawdza, czy można dobrać kartę ze stosu rezerwowego.
+		/// </summary>
+		/// <returns>Zawsze true.</returns>
 		public bool CanDrawFromStock() {
-			// Can always attempt to draw. If stock is empty, it will try to reset from waste.
-			// The DrawFromStock method itself handles the logic of empty stock/waste.
+			// Zawsze można spróbować dobrać kartę. Jeśli stos rezerwowy (stock) jest pusty, nastąpi próba resetu ze stosu odrzuconych (waste).
+			// Metoda DrawFromStock sama obsługuje logikę pustego stosu rezerwowego/odrzuconych.
 			return true; 
 		}
 
-		// Internal helper for MoveService to add a move record with undo history handling
+		/// <summary>
+		/// Pomocnicza metoda do dodawania rekordu ruchu z obsługą historii cofania.
+		/// </summary>
+		/// <param name="record">Rekord ruchu.</param>
 		internal void AddMoveRecord(MoveRecord record) {
 			if (_moveHistory.Count >= MaxUndoSteps) _moveHistory.Pop();
 			_moveHistory.Push(record);
 		}
 
-		// Internal helper for MoveService to increment the move counter
+		/// <summary>
+		/// Pomocnicza metoda do inkrementacji licznika ruchów.
+		/// </summary>
 		internal void IncrementMoveCount() {
 			MovesCount++;
 		}
 
-		// Pomocnicza metoda do porównywania list kart (proste porównanie referencji lub wartości)
+		/// <summary>
+		/// Pomocnicza metoda do porównywania list kart.
+		/// </summary>
 		private static bool AreCardListsEqual(List<Card> list1, List<Card> list2) {
 			if (list1.Count != list2.Count) return false;
 			for (int i = 0; i < list1.Count; i++) {
@@ -267,8 +313,9 @@ namespace SolitaireConsole {
 			return true;
 		}
 
-
-		// Metoda pomocnicza do pobierania obiektu stosu na podstawie typu i indeksu
+		/// <summary>
+		/// Pomocnicza metoda do pobierania obiektu stosu na podstawie typu i indeksu.
+		/// </summary>
 		private CardPile? GetPile(PileType type, int index) {
 			try {
 				switch (type) {
@@ -284,13 +331,19 @@ namespace SolitaireConsole {
 			}
 		}
 
-		// Metoda sprawdzająca warunek zwycięstwa
+		/// <summary>
+		/// Sprawdza warunek zwycięstwa.
+		/// </summary>
+		/// <returns>Czy gra została wygrana.</returns>
 		public bool CheckWinCondition() {
 			// Wygrana następuje, gdy wszystkie 4 stosy końcowe są pełne (mają 13 kart)
 			return Foundations.All(f => f.Count == 13);
 		}
 
-		// Metoda głównej pętli gry
+		/// <summary>
+		/// Główna pętla gry.
+		/// </summary>
+		/// <returns>Wynik gry.</returns>
 		public GameResult RunGameLoop() {
 			while (true) {
 				_interactionMode.Display(); // Wyświetl stan gry
@@ -311,22 +364,33 @@ namespace SolitaireConsole {
 			}
 		}
 
-		// Prosta metoda pauzująca grę do czasu naciśnięcia Enter
+		/// <summary>
+		/// Pauzuje grę do czasu naciśnięcia Enter.
+		/// </summary>
 		public void Pause() {
 			Console.WriteLine("\nNaciśnij Enter, aby kontynuować...");
 			Console.ReadLine();
 		}
 
+		/// <summary>
+		/// Czyści ostatni błąd ruchu.
+		/// </summary>
 		public void ClearLastMoveError() {
 			LastMoveError = null;
 		}
 
+		/// <summary>
+		/// Ustawia komunikat błędu ostatniego ruchu.
+		/// </summary>
+		/// <param name="errorMessage">Treść błędu.</param>
 		public void SetLastMoveError(string? errorMessage) {
 			LastMoveError = errorMessage;
 		}
 	}
 
-	// Klasa reprezentująca pojedynczy ruch (do mechanizmu Undo)
+	/// <summary>
+	/// Klasa reprezentująca pojedynczy ruch (do mechanizmu Undo).
+	/// </summary>
 	public class MoveRecord(PileType sourceType, int sourceIndex, PileType destType, int destIndex, List<Card> movedCards, bool flipped, bool foundationSet) {
 		public PileType SourcePileType { get; } = sourceType;
 		public int SourcePileIndex { get; } = sourceIndex;

@@ -2,19 +2,19 @@
 
 namespace SolitaireConsole {
 	/// <summary>
-	/// Represents a deck of cards.
+	/// Reprezentuje talię kart.
 	/// </summary>
 	public class Deck {
-		private readonly List<Card> cards; // List of cards in the deck
-		private static readonly Random rng = new(); // For shuffling
+		private readonly List<Card> cards; // Lista kart w talii
+		private static readonly Random rng = new(); // Do tasowania
 
 		/// <summary>
-		/// Gets the number of cards remaining in the deck.
+		/// Zwraca liczbę kart pozostałych w talii.
 		/// </summary>
 		public int Count => cards.Count;
 
 		/// <summary>
-		/// Initializes a new instance of the <see cref="Deck"/> class, creating a full shuffled deck of 52 cards.
+		/// Tworzy nową talię 52 kart i ją tasuje.
 		/// </summary>
 		public Deck() {
 			cards = [];
@@ -28,21 +28,21 @@ namespace SolitaireConsole {
 		}
 
 		/// <summary>
-		/// Shuffles the cards in the deck using the Fisher-Yates algorithm.
+		/// Tasuje karty w talii algorytmem Fishera-Yatesa.
 		/// </summary>
 		public void Shuffle() {
 			int n = cards.Count;
 			while (n > 1) {
 				n--;
-				int k = rng.Next(n + 1); // Random index
-				(cards[n], cards[k]) = (cards[k], cards[n]); // Swap cards
+				int k = rng.Next(n + 1); // Losowy indeks
+				(cards[n], cards[k]) = (cards[k], cards[n]); // Zamień karty miejscami
 			}
 		}
 
 		/// <summary>
-		/// Deals one card from the top of the deck.
+		/// Wydaje jedną kartę z wierzchu talii.
 		/// </summary>
-		/// <returns>The dealt card, or <c>null</c> if the deck is empty.</returns>
+		/// <returns>Wydana karta lub <c>null</c>, jeśli talia jest pusta.</returns>
 		public Card? Deal() {
 			if (cards.Count == 0) return null;
 			Card card = cards[^1];
@@ -51,12 +51,12 @@ namespace SolitaireConsole {
 		}
 
 		/// <summary>
-		/// Adds a list of cards back to the deck (e.g., from the waste pile).
+		/// Dodaje listę kart z powrotem do talii (np. ze stosu odrzuconych).
 		/// </summary>
-		/// <param name="cardsToAdd">The cards to add to the deck.</param>
+		/// <param name="cardsToAdd">Karty do dodania do talii.</param>
 		public void AddCards(IEnumerable<Card> cardsToAdd) {
 			foreach (var card in cardsToAdd) {
-				card.IsFaceUp = false; // Hide cards before adding them to the deck
+				card.IsFaceUp = false; // Zakryj karty przed dodaniem ich do talii
 				cards.Add(card);
 			}
 		}

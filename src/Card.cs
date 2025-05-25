@@ -1,28 +1,47 @@
 using SolitaireConsole.Utils;
 
 namespace SolitaireConsole {
-	// Enum reprezentujący kolory kart (Czerwony/Czarny)
+	/// <summary>
+	/// Enum reprezentujący kolory kart (Czerwony/Czarny).
+	/// </summary>
 	public enum CardColor {
 		Red,
 		Black
 	}
 
-	// Enum reprezentujący figury kart (As, 2-10, Walet, Dama, Król)
+	/// <summary>
+	/// Enum reprezentujący figury kart (As, 2-10, Walet, Dama, Król).
+	/// </summary>
 	public enum Rank {
 		Ace = 1, Two, Three, Four, Five, Six, Seven, Eight, Nine, Ten, Jack, Queen, King
 	}
 
-	// Klasa reprezentująca pojedynczą kartę
+	/// <summary>
+	/// Klasa reprezentująca pojedynczą kartę.
+	/// </summary>
 	public class Card(Suit suit, Rank rank) {
+		/// <summary>
+		/// Kolor karty (kier, karo, pik, trefl).
+		/// </summary>
 		public Suit Suit { get; } = suit;
+		/// <summary>
+		/// Figura karty.
+		/// </summary>
 		public Rank Rank { get; } = rank;
+		/// <summary>
+		/// Czy karta jest odkryta.
+		/// </summary>
 		public bool IsFaceUp { get; set; } = false; // Domyślnie karta jest zakryta
 
-		// Zwraca kolor karty (Czerwony/Czarny) na podstawie jej koloru (Suit)
+		/// <summary>
+		/// Zwraca kolor karty (Czerwony/Czarny) na podstawie jej koloru (Suit).
+		/// </summary>
 		public CardColor Color => (Suit == Suit.Hearts || Suit == Suit.Diamonds) ? CardColor.Red : CardColor.Black;
 
-		// Zwraca reprezentację tekstową karty (np. " A♥", "10♠", " K♦")
-		// lub "[ ]" jeśli zakryta
+		/// <summary>
+		/// Zwraca reprezentację tekstową karty (np. " A♥", "10♠", " K♦") lub "[*]" jeśli zakryta.
+		/// </summary>
+		/// <returns>Reprezentacja tekstowa karty.</returns>
 		public override string ToString() {
 			if (!IsFaceUp) {
 				return "[*]"; // Reprezentacja zakrytej karty

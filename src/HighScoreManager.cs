@@ -1,16 +1,24 @@
 namespace SolitaireConsole {
-    // Klasa do zarządzania najlepszymi wynikami
+    /// <summary>
+    /// Klasa do zarządzania najlepszymi wynikami.
+    /// </summary>
     public class HighScoreManager {
         private readonly string filePath; // Ścieżka do pliku z wynikami
         private List<(string Name, int Score)> highScores; // Lista wyników (Imię, Liczba ruchów)
 
-        // Konstruktor
+        /// <summary>
+        /// Tworzy nowy obiekt HighScoreManager i wczytuje wyniki z pliku.
+        /// </summary>
+        /// <param name="fileName">Nazwa pliku z wynikami.</param>
         public HighScoreManager(string fileName) {
             filePath = Path.Combine(Environment.CurrentDirectory, fileName); // Zapisuje w katalogu aplikacji
             highScores = LoadScores();
         }
 
-        // Wczytuje wyniki z pliku
+        /// <summary>
+        /// Wczytuje wyniki z pliku.
+        /// </summary>
+        /// <returns>Lista wyników (Imię, Liczba ruchów).</returns>
         private List<(string Name, int Score)> LoadScores() {
             var scores = new List<(string Name, int Score)>();
             if (!File.Exists(filePath)) {
@@ -35,7 +43,11 @@ namespace SolitaireConsole {
             return scores;
         }
 
-        // Dodaje nowy wynik i zapisuje do pliku
+        /// <summary>
+        /// Dodaje nowy wynik i zapisuje do pliku.
+        /// </summary>
+        /// <param name="name">Imię gracza.</param>
+        /// <param name="score">Wynik (liczba ruchów).</param>
         public void AddScore(string name, int score) {
             highScores.Add((name, score));
             // Sortuje ponownie po dodaniu nowego wyniku
@@ -46,7 +58,9 @@ namespace SolitaireConsole {
             SaveScores(); // Zapisuje zaktualizowaną listę do pliku
         }
 
-        // Zapisuje wyniki do pliku
+        /// <summary>
+        /// Zapisuje wyniki do pliku.
+        /// </summary>
         private void SaveScores() {
             try {
                 // Tworzy listę linii w formacie "INICJAŁY,WYNIK"
@@ -57,7 +71,10 @@ namespace SolitaireConsole {
             }
         }
 
-        // Wyświetla ranking w konsoli
+        /// <summary>
+        /// Zwraca ranking do wyświetlenia w konsoli.
+        /// </summary>
+        /// <returns>Tablica stringów z wynikami.</returns>
         public string[] GetDisplayStrings() {
 			if (highScores.Count == 0) {
                 return ["Brak zapisanych wyników"];

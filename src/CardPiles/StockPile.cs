@@ -1,12 +1,16 @@
 using SolitaireConsole.UI;
 
 namespace SolitaireConsole.CardPiles {
-	// Stos rezerwowy (Stock) - skąd dobieramy karty
+	/// <summary>
+	/// Stos rezerwowy (Stock) - skąd dobieramy karty w grze pasjans.
+	/// </summary>
 	public class StockPile : CardPile {
 		private readonly Deck deck; // Talia używana do gry
 		public override PileType Type { get => PileType.Stock; }
 
-		// Konstruktor inicjalizujący stos rezerwowy z nowej talii
+		/// <summary>
+		/// Konstruktor inicjalizujący stos rezerwowy z nowej, potasowanej talii.
+		/// </summary>
 		public StockPile() {
 			deck = new Deck(); // Tworzy nową, potasowaną talię
 
@@ -19,13 +23,20 @@ namespace SolitaireConsole.CardPiles {
 			}
 		}
 
-		// Metoda do rozdania kart na początku gry do kolumn Tableau
+		/// <summary>
+		/// Rozdaje określoną liczbę kart na początku gry do kolumn Tableau.
+		/// </summary>
+		/// <param name="count">Liczba kart do rozdania.</param>
+		/// <returns>Lista rozdanych kart.</returns>
 		public List<Card> DealInitialTableauCards(int count) {
 			return RemoveTopCards(count);
 		}
 
-		// Metoda do dobrania kart ze stosu rezerwowego
-		// Zwraca listę dobranych kart (1 lub 3 w zależności od trudności)
+		/// <summary>
+		/// Dobiera określoną liczbę kart ze stosu rezerwowego.
+		/// </summary>
+		/// <param name="drawCount">Liczba kart do dobrania.</param>
+		/// <returns>Lista dobranych kart (odkrytych).</returns>
 		public List<Card> Draw(int drawCount) {
 			int actualDrawCount = Math.Min(drawCount, cards.Count); // Nie można dobrać więcej niż jest
 			List<Card> drawnCards = RemoveTopCards(actualDrawCount);
@@ -35,13 +46,18 @@ namespace SolitaireConsole.CardPiles {
 			return drawnCards;
 		}
 
-		// Metoda do resetowania stosu rezerwowego (przeniesienie kart z Waste z powrotem)
+		/// <summary>
+		/// Resetuje stos rezerwowy, przenosząc karty z Waste z powrotem i tasując je.
+		/// </summary>
+		/// <param name="wasteCards">Karty do przeniesienia z Waste.</param>
 		public void Reset(IEnumerable<Card> wasteCards) {
 			AddCards(wasteCards.Reverse()); // Odwracamy kolejność, aby zachować porządek dobierania				
 			Shuffle(); // Tasujemy ponownie (zgodnie ze specyfikacją)
 		}
 
-		// Prywatna metoda do tasowania kart w stosie rezerwowym używając algorytmu Fisher-Yates.
+		/// <summary>
+		/// Tasuje karty w stosie rezerwowym algorytmem Fishera-Yatesa i zakrywa je.
+		/// </summary>
 		private void Shuffle() {
 			int n = cards.Count;
 			var rng = new Random();

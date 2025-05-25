@@ -2,14 +2,26 @@ using SolitaireConsole.CardPiles;
 using SolitaireConsole.InteractionModes;
 
 namespace SolitaireConsole.Input {
+	/// <summary>
+	/// Strategia obsługi wejścia użytkownika za pomocą klawiszy strzałek.
+	/// </summary>
 	public class ArrowInputStrategy : InputStrategy, IGameInputStrategy {
 		private readonly ArrowInteractionContext _context;
 		public Game Game { get; private set; }
 
+		/// <summary>
+		/// Tworzy nową instancję strategii wejścia obsługującej klawisze strzałek.
+		/// </summary>
+		/// <param name="game">Obiekt gry.</param>
+		/// <param name="context">Kontekst interakcji dla obsługi strzałek.</param>
 		public ArrowInputStrategy(Game game, ArrowInteractionContext context) : base() {
 			_context = context;
-			this.Game = game;
+			Game = game;
 		}
+
+		/// <summary>
+		/// Obsługuje wejście od użytkownika, reagując na naciśnięcia klawiszy.
+		/// </summary>
 		public override void HandleInput(Action<GameResult> indicateGameEnd) {
 			ConsoleKeyInfo keyInfo = Console.ReadKey(true);
 			switch (keyInfo.Key) {
@@ -53,6 +65,9 @@ namespace SolitaireConsole.Input {
 			return Console.ReadKey(true);
 		}
 
+		/// <summary>
+		/// Obsługuje naciśnięcie klawisza Enter w zależności od aktualnie wybranego obszaru.
+		/// </summary>
 		private void Enter() {
 			Game.ClearLastMoveError(); // Wyczyść błędy przed wykonaniem ruchu
 
@@ -109,6 +124,9 @@ namespace SolitaireConsole.Input {
 			}
 		}
 
+		/// <summary>
+		/// Obsługuje naciśnięcie klawisza Escape, anulując wybór celu przeniesienia na tableau.
+		/// </summary>
 		private void Escape() {
 			// Sometimes doesn't work?
 			if (_context.SelectingDestiantionOnTableau) {
@@ -117,6 +135,9 @@ namespace SolitaireConsole.Input {
 			}
 		}
 
+		/// <summary>
+		/// Przesuwa zaznaczenie w prawo w zależności od aktualnego kontekstu.
+		/// </summary>
 		private void MoveRight() {
 			if (_context.SelectingDestiantionOnTableau) {
 				_context.SelectedDestTableauIndex = Math.Clamp(_context.SelectedDestTableauIndex!.Value + 1, 0, 6);
@@ -134,6 +155,9 @@ namespace SolitaireConsole.Input {
 			}
 		}
 
+		/// <summary>
+		/// Przesuwa zaznaczenie w lewo w zależności od aktualnego kontekstu.
+		/// </summary>
 		private void MoveLeft() {
 			if (_context.SelectingDestiantionOnTableau) {
 				_context.SelectedDestTableauIndex = Math.Clamp(_context.SelectedDestTableauIndex!.Value - 1, 0, 6);
@@ -148,6 +172,9 @@ namespace SolitaireConsole.Input {
 			}
 		}
 
+		/// <summary>
+		/// Przesuwa zaznaczenie w górę w zależności od aktualnego kontekstu.
+		/// </summary>
 		private void MoveUp() {
 			if (_context.SelectingDestiantionOnTableau) return;
 			if (_context.SelectedArea == PileType.Tableau) {
@@ -165,6 +192,9 @@ namespace SolitaireConsole.Input {
 			}
 		}
 
+		/// <summary>
+		/// Przesuwa zaznaczenie w dół w zależności od aktualnego kontekstu.
+		/// </summary>
 		private void MoveDown() {
 			if (_context.SelectingDestiantionOnTableau) return;
 			if (_context.SelectedArea == PileType.Tableau) {
@@ -190,6 +220,11 @@ namespace SolitaireConsole.Input {
 			}
 		}
 
+		/// <summary>
+		/// Aktualizuje wybór kolumny tableau w określonym kierunku.
+		/// </summary>
+		/// <param name="direction">Kierunek przesunięcia (1 lub -1).</param>
+		/// <returns>Czy wybór został zmieniony.</returns>
 		private bool UpdateTableauSelection(int direction) {
 			int nextIndex = FindNextNonEmptyTableau(_context.SelectedTableauIndex!.Value, direction);
 			if (nextIndex == _context.SelectedTableauIndex!.Value) return false;
@@ -198,6 +233,12 @@ namespace SolitaireConsole.Input {
 			UpdateTableauCardSelection(_context.SelectedCardIndex);
 			return true;
 		}
+		/// <summary>
+		/// Znajduje najbliższą niepustą kolumnę tableau w określonym kierunku.
+		/// </summary>
+		/// <param name="currentIndex">Aktualny indeks kolumny.</param>
+		/// <param name="direction">Kierunek wyszukiwania (1 lub -1).</param>
+		/// <returns>Indeks najbliższej niepustej kolumny lub bieżący indeks, jeśli nie znaleziono.</returns>
 		private int FindNextNonEmptyTableau(int currentIndex, int direction) {
 			int index = currentIndex;
 			int searchedCount = 0;
@@ -214,6 +255,11 @@ namespace SolitaireConsole.Input {
 			return currentIndex;
 		}
 
+		/// <summary>
+		/// Aktualizuje wybór karty w kolumnie tableau.
+		/// </summary>
+		/// <param name="newIndex">Nowy indeks karty.</param>
+		/// <returns>Czy wybór został zmieniony.</returns>
 		private bool UpdateTableauCardSelection(int newIndex) {
 			if (_context.SelectedArea != PileType.Tableau) return false;
 			var maxIndex = Game.Tableaux[_context.SelectedTableauIndex!.Value].Count - 1;
@@ -223,6 +269,9 @@ namespace SolitaireConsole.Input {
 			return changed;
 		}
 
+		/// <summary>
+		/// Waliduje wybór kolumny tableau po wykonaniu ruchu.
+		/// </summary>
 		private void RevalidateTableauSelection() {
 			if (_context.SelectedArea != PileType.Tableau) return;
 			if (!Game.Tableaux[_context.SelectedTableauIndex!.Value].IsEmpty) {
@@ -253,6 +302,9 @@ namespace SolitaireConsole.Input {
 			_context.SelectedCardIndex = 0;
 		}
 
+		/// <summary>
+		/// Waliduje wybór stosu kart odrzuconych po wykonaniu ruchu.
+		/// </summary>
 		private void RevalidateWasteSelection() {
 			if (_context.SelectedArea != PileType.Waste) return;
 			if (Game.Waste.IsEmpty) {
@@ -261,11 +313,14 @@ namespace SolitaireConsole.Input {
 				return;
 			}
 
-			// Regardless of difficulty, if waste is selected and not empty,
-			// the selected card index should always be 0, representing the single playable card.
+			// Niezależnie od poziomu trudności, jeśli stos kart odrzuconych jest wybrany i nie jest pusty,
+			// indeks wybranej karty powinien zawsze wynosić 0, reprezentując jedyną możliwą do zagrania kartę.
 			_context.SelectedCardIndex = 0;
 		}
 
+		/// <summary>
+		/// Próbuje przenieść wybraną kartę na fundament.
+		/// </summary>
 		private void TryMoveToFoundation() {
 			Game.ClearLastMoveError(); // Wyczyść błędy przed wykonaniem ruchu
 
