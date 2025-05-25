@@ -11,114 +11,151 @@ namespace SolitaireConsole.Input {
 
 			string[] parts = input.Split(' ', StringSplitOptions.RemoveEmptyEntries); // Podziel komendę na części
 			string command = parts[0];
+			string[] args = parts.Length > 1 ? parts.Skip(1).ToArray() : [];
 
 			try { // Obsługa potencjalnych błędów parsowania komend
-				switch (command) { // TODO: Rozdzielić na osobne metody dla kazdej komendy
+				switch (command) {
 					case "draw":
 					case "d":
-						if (!Game.DrawFromStock()) {
-							// TODO:
-							// Error message for DrawFromStock is handled internally or via LastMoveError by DrawFromStock itself if necessary
-							// No specific SetLastMoveError here unless DrawFromStock is changed to throw exceptions too.
-						}
+						HandleDrawCommand();
 						break;
 
 					case "move":
 					case "m":
-						if (parts.Length < 2) {
-							Game.SetLastMoveError("Nieprawidłowa komenda 'move'. Użycie: move [źródło] ([cel] [liczba_kart - opcjonalnie]). Źródła: W, F1-F4, T1-T7.");
-							return;
-						}
-
-						string sourceStr = parts[1].ToUpper();
-						int sourceIndex = ParsePileString(sourceStr, out PileType sourceType);
-
-						if (sourceIndex == -1 || sourceType == PileType.Stock) { // Nie można ruszać ze Stock bezpośrednio
-							Game.SetLastMoveError($"Nieprawidłowe źródło: {sourceStr}");
-							return;
-						}
-
-						// Sprawdź czy jest to próba automatycznego przeniesienia (podano tylko źródło)
-						if (parts.Length == 2) {
-							if (!Game.GameSettings.AutoMoveToFoundation) {
-								Game.SetLastMoveError("Automatyczne przenoszenie kart na fundament jest wyłączone. Musisz podać cel dla ruchu ręcznie. Możesz to zmienić w ustawieniach gry.");
-								return; // Automatyczne przenoszenie jest wyłączone
-							}
-
-							if (sourceType != PileType.Tableau && sourceType != PileType.Waste) {
-								Game.SetLastMoveError("Automatyczne przenoszenie jest możliwe tylko ze stosów Tableau (T) lub kart odrzuconych (W).");
-								return;
-							}
-
-							if (Game.TryAutoMoveToFoundation(sourceType, sourceIndex)) return; // Ruch się powiódł
-
-							// Wiadomość o błędzie jest ustawiana w TryAutoMoveToFoundation lub w TryMove
-							// Jeśli zwróci false i nie ustawiono błędu, oznacza to, że nie znaleziono poprawnego automatycznego ruchu.
-							if (string.IsNullOrEmpty(Game.LastMoveError)) {
-								Game.SetLastMoveError("Nie można automatycznie przenieść karty na fundament.");
-							}
-							return;
-						}
-
-						// Zwykły ruch z źródła do celu
-						if (parts.Length < 3) {
-							Game.SetLastMoveError("Nieprawidłowa komenda 'move'. Musisz podać cel dla tego typu ruchu.");
-							return;
-						}
-
-						string destStr = parts[2].ToUpper();
-						int cardCount = 1; // Domyślnie przenosimy 1 kartę
-
-						// Sprawdź, czy podano liczbę kart (dla ruchu T->T)
-						if (parts.Length > 3) {
-							if (!int.TryParse(parts[3], out cardCount) || cardCount < 1) {
-								Game.SetLastMoveError("Nieprawidłowa liczba kart. Musi być dodatnią liczbą całkowitą.");
-								return;
-							}
-						}
-
-						// Parsowanie źródła
-						PileType destType;
-						int destIndex = ParsePileString(destStr, out destType);
-						if (destIndex == -1 || destType == PileType.Stock || destType == PileType.Waste) { // Nie można ruszać na Stock ani Waste
-							Game.SetLastMoveError($"Nieprawidłowy cel: {destStr}");
-							return;
-						}
-
-						// Wykonaj ruch
-						Game.TryMove(sourceType, sourceIndex, destType, destIndex, cardCount); // Błąd jest "łapany" i ustawiany wewnątrz metody Game.TryMove
+						HandleMoveCommand(args);
 						break;
 
 					case "undo":
 					case "u":
-						Game.UndoLastMove(); // Wiadomość o błędzie jest ustawiana w UndoLastMove i wyświetlana przez DisplayStrategy
+						HandleUndoCommand();
 						break;
 
 					case "restart":
 					case "r":
-						Console.Write("Czy na pewno chcesz rozpocząć nową grę? (t/n): ");
-						if (Console.ReadLine()?.ToLower() == "t") {
-							indicateGameEnd(GameResult.Restart); // Sygnalizuj chęć rozpoczęcia nowej gry
-							return;
-						}
+						HandleRestartCommand(indicateGameEnd);
 						break;
 
 					case "quit":
 					case "q":
-						Console.Write("Czy na pewno chcesz zakończyć grę? (t/n): ");
-						if (Console.ReadLine()?.ToLower() == "t") {
-							indicateGameEnd(GameResult.Quit); // Sygnalizuj chęć zakończenia gry
-							return;
-						}
+						HandleQuitCommand(indicateGameEnd);
 						break;
 
 					default:
 						Console.WriteLine("Nieznana komenda.");
-						Game.Pause(); // Consider if this should set an error too.
+						Game.Pause();
 						break;
 				}
 			} catch (Exception ex) {
 				Game.SetLastMoveError($"Wystąpił nieoczekiwany błąd: {ex.Message}");
+			}
+		}
+
+		/// <summary>
+		/// Obsługuje komendę pobrania karty ze stosu.
+		/// </summary>
+		private void HandleDrawCommand() {
+			if (!Game.DrawFromStock()) {
+				// TODO:
+				// Error message for DrawFromStock is handled internally or via LastMoveError by DrawFromStock itself if necessary
+				// No specific SetLastMoveError here unless DrawFromStock is changed to throw exceptions too.
+			}
+		}
+
+		/// <summary>
+		/// Obsługuje komendę przeniesienia kart.
+		/// </summary>
+		/// <param name="args">Argumenty komendy.</param>
+		private void HandleMoveCommand(string[] args) {
+			if (args.Length < 1) {
+				Game.SetLastMoveError("Nieprawidłowa komenda 'move'. Użycie: move [źródło] ([cel] [liczba_kart - opcjonalnie]). Źródła: W, F1-F4, T1-T7.");
+				return;
+			}
+
+			string sourceStr = args[0].ToUpper();
+			int sourceIndex = ParsePileString(sourceStr, out PileType sourceType);
+
+			if (sourceIndex == -1 || sourceType == PileType.Stock) { // Nie można ruszać ze Stock bezpośrednio
+				Game.SetLastMoveError($"Nieprawidłowe źródło: {sourceStr}");
+				return;
+			}
+
+			// Sprawdź czy jest to próba automatycznego przeniesienia (podano tylko źródło)
+			if (args.Length == 1) {
+				if (!Game.GameSettings.AutoMoveToFoundation) {
+					Game.SetLastMoveError("Automatyczne przenoszenie kart na fundament jest wyłączone. Musisz podać cel dla ruchu ręcznie. Możesz to zmienić w ustawieniach gry.");
+					return; // Automatyczne przenoszenie jest wyłączone
+				}
+
+				if (sourceType != PileType.Tableau && sourceType != PileType.Waste) {
+					Game.SetLastMoveError("Automatyczne przenoszenie jest możliwe tylko ze stosów Tableau (T) lub kart odrzuconych (W).");
+					return;
+				}
+
+				if (Game.TryAutoMoveToFoundation(sourceType, sourceIndex)) return; // Ruch się powiódł
+
+				// Wiadomość o błędzie jest ustawiana w TryAutoMoveToFoundation lub w TryMove
+				// Jeśli zwróci false i nie ustawiono błędu, oznacza to, że nie znaleziono poprawnego automatycznego ruchu.
+				if (string.IsNullOrEmpty(Game.LastMoveError)) {
+					Game.SetLastMoveError("Nie można automatycznie przenieść karty na fundament.");
+				}
+				return;
+			}
+
+			// Zwykły ruch z źródła do celu
+			if (args.Length < 2) {
+				Game.SetLastMoveError("Nieprawidłowa komenda 'move'. Musisz podać cel dla tego typu ruchu.");
+				return;
+			}
+
+			string destStr = args[1].ToUpper();
+			int cardCount = 1; // Domyślnie przenosimy 1 kartę
+
+			// Sprawdź, czy podano liczbę kart (dla ruchu T->T)
+			if (args.Length > 2) {
+				if (!int.TryParse(args[2], out cardCount) || cardCount < 1) {
+					Game.SetLastMoveError("Nieprawidłowa liczba kart. Musi być dodatnią liczbą całkowitą.");
+					return;
+				}
+			}
+
+			// Parsowanie celu
+			PileType destType;
+			int destIndex = ParsePileString(destStr, out destType);
+			if (destIndex == -1 || destType == PileType.Stock || destType == PileType.Waste) { // Nie można ruszać na Stock ani Waste
+				Game.SetLastMoveError($"Nieprawidłowy cel: {destStr}");
+				return;
+			}
+
+			// Wykonaj ruch
+			Game.TryMove(sourceType, sourceIndex, destType, destIndex, cardCount); // Błąd jest "łapany" i ustawiany wewnątrz metody Game.TryMove
+		}
+
+		/// <summary>
+		/// Obsługuje komendę cofnięcia ostatniego ruchu.
+		/// </summary>
+		private void HandleUndoCommand() {
+			Game.UndoLastMove(); // Wiadomość o błędzie jest ustawiana w UndoLastMove i wyświetlana przez DisplayStrategy
+		}
+
+		/// <summary>
+		/// Obsługuje komendę ponownego uruchomienia gry.
+		/// </summary>
+		/// <param name="indicateGameEnd">Akcja sygnalizująca zakończenie gry.</param>
+		private void HandleRestartCommand(Action<GameResult> indicateGameEnd) {
+			Console.Write("Czy na pewno chcesz rozpocząć nową grę? (t/n): ");
+			if (Console.ReadLine()?.ToLower() == "t") {
+				indicateGameEnd(GameResult.Restart); // Sygnalizuj chęć rozpoczęcia nowej gry
+			}
+		}
+
+		/// <summary>
+		/// Obsługuje komendę zakończenia gry.
+		/// </summary>
+		/// <param name="indicateGameEnd">Akcja sygnalizująca zakończenie gry.</param>
+		private void HandleQuitCommand(Action<GameResult> indicateGameEnd) {
+			Console.Write("Czy na pewno chcesz zakończyć grę? (t/n): ");
+			if (Console.ReadLine()?.ToLower() == "t") {
+				indicateGameEnd(GameResult.Quit); // Sygnalizuj chęć zakończenia gry
 			}
 		}
 
@@ -157,11 +194,11 @@ namespace SolitaireConsole.Input {
 		}
 
 		public override ConsoleKeyInfo ReadKey() {
-			// TextInputStrategy doesn't use direct key reads for menu navigation in the same way ArrowInputStrategy does.
-			// This method is primarily for the Menu class when it's configured to use arrow key navigation.
-			// However, to satisfy the abstract class, we can return a default or throw NotImplementedException
-			// if direct key reads are not intended for this strategy outside of Console.ReadLine().
-			// For now, let's return a default value, as Menu might call it.
+			// TextInputStrategy nie używa bezpośredniego odczytu klawiszy do nawigacji po menu w taki sam sposób jak ArrowInputStrategy.
+			// Ta metoda jest wykorzystywana głównie przez klasę Menu, gdy jest skonfigurowana do nawigacji strzałkami.
+			// Jednak aby spełnić wymagania klasy abstrakcyjnej, możemy zwrócić domyślną wartość lub rzucić NotImplementedException,
+			// jeśli bezpośredni odczyt klawiszy nie jest przewidziany dla tej strategii poza Console.ReadLine().
+			// Na razie zwracamy domyślną wartość, ponieważ Menu może ją wywołać.
 			return Console.ReadKey(true);
 		}
 	}
