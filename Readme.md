@@ -168,36 +168,43 @@ Klasyczne sterowanie przez wpisywanie komend tekstowych:
 
 ```
 SolitaireConsole/
-├── CardPiles/           # Implementacje różnych typów stosów kart
-│   ├── CardPile.cs      # Klasa bazowa dla wszystkich stosów
-│   ├── StockPile.cs     # Stos rezerwowy [S]
-│   ├── WastePile.cs     # Stos odrzuconych [W]
-│   ├── FoundationPile.cs # Stosy końcowe [F1-F4]
-│   └── TableauPile.cs   # Kolumny główne [T1-T7]
-├── Input/               # System obsługi wejścia użytkownika
-│   ├── InputStrategy.cs # Interfejs strategii wejścia
-│   ├── ArrowInputStrategy.cs  # Obsługa trybu strzałkowego
-│   ├── TextInputStrategy.cs   # Obsługa trybu tekstowego
-│   └── InputMode.cs     # Enum trybów sterowania
-├── InteractionModes/    # Tryby interakcji z grą
-│   ├── InteractionMode.cs     # Klasa bazowa trybów
-│   ├── ArrowInteractionMode.cs # Logika trybu strzałkowego
-│   └── TextInteractionMode.cs  # Logika trybu tekstowego
-├── UI/                  # Komponenty interfejsu użytkownika
-│   ├── DisplayStrategy.cs     # System wyświetlania planszy
-│   ├── Menu.cs          # System menu z renderowaniem
-│   ├── SettingsMenu.cs  # Menu ustawień gry
-│   ├── DifficultySelector.cs  # Wybór poziomu trudności
-│   ├── WinScreen.cs     # Ekran zwycięstwa
-│   ├── HighScoreScreen.cs     # Wyświetlanie rankingu
-│   └── SettingsManager.cs     # Zarządzanie ustawieniami
-├── Utils/               # Klasy pomocnicze
-├── Game.cs              # Główna klasa gry
-├── MoveService.cs       # Serwis obsługi ruchów
-├── HighScoreManager.cs  # Zarządzanie rankingiem
-├── Card.cs              # Model karty (Card, Rank, Suit)
-├── Deck.cs              # Talia kart
-└── Program.cs           # Punkt wejścia aplikacji
+├── src/
+│   ├── CardPiles/           # Implementacje różnych typów stosów kart
+│   │   ├── CardPile.cs      # Klasa bazowa dla wszystkich stosów
+│   │   ├── StockPile.cs     # Stos rezerwowy [S]
+│   │   ├── WastePile.cs     # Stos odrzuconych [W]
+│   │   ├── FoundationPile.cs # Stosy końcowe [F1-F4]
+│   │   └── TableauPile.cs   # Kolumny główne [T1-T7]
+│   ├── Input/               # System obsługi wejścia użytkownika
+│   │   ├── InputStrategy.cs # Interfejs strategii wejścia
+│   │   ├── ArrowInputStrategy.cs  # Obsługa trybu strzałkowego
+│   │   ├── TextInputStrategy.cs   # Obsługa trybu tekstowego
+│   │   └── InputMode.cs     # Enum trybów sterowania
+│   ├── InteractionModes/    # Tryby interakcji z grą
+│   │   ├── InteractionMode.cs     # Klasa bazowa trybów
+│   │   ├── ArrowInteractionMode.cs # Logika trybu strzałkowego
+│   │   └── TextInteractionMode.cs  # Logika trybu tekstowego
+│   ├── UI/                  # Komponenty interfejsu użytkownika
+│   │   ├── DisplayStrategy.cs     # System wyświetlania planszy
+│   │   ├── Menu.cs          # System menu z renderowaniem
+│   │   ├── SettingsMenu.cs  # Menu ustawień gry
+│   │   ├── DifficultySelector.cs  # Wybór poziomu trudności
+│   │   ├── WinScreen.cs     # Ekran zwycięstwa
+│   │   ├── HighScoreScreen.cs     # Wyświetlanie rankingu
+│   │   └── SettingsManager.cs     # Zarządzanie ustawieniami
+│   ├── Utils/               # Klasy pomocnicze
+│   ├── Game.cs              # Główna klasa gry
+│   ├── MoveService.cs       # Serwis obsługi ruchów
+│   ├── HighScoreManager.cs  # Zarządzanie rankingiem
+│   ├── Card.cs              # Model karty (Card, Rank, Suit)
+│   ├── Deck.cs              # Talia kart
+│   ├── Program.cs           # Punkt wejścia aplikacji
+│   └── SolitaireConsole.csproj
+├── SolitaireConsole.sln
+├── .editorconfig
+├── .gitignore
+├── Licence
+└── Readme.md
 ```
 
 ### Główne komponenty systemu
